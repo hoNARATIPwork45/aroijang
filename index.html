@@ -796,21 +796,48 @@
     if(c) selectBranch(+c.dataset.i, true);
   });
 
-  /* --- go to my real location --- */
+  /* --- go to my location (real GPS, with random demo fallback) --- */
+  function dropUser(ll, label){
+    if(userMarker) userMarker.setLatLng(ll);
+    else userMarker = L.marker(ll, {icon:dotIcon("lme", 18), keyboard:false}).addTo(map);
+    userMarker.bindPopup(label).openPopup();
+    map.flyTo(ll, 16, {duration:0.8});
+  }
+  function fakeLocation(){
+    // สุ่มตำแหน่งจำลองรอบ ๆ กรุงเทพฯ
+    var lat = 13.700 + Math.random() * 0.130;
+    var lng = 100.470 + Math.random() * 0.150;
+    dropUser([lat, lng], "ตำแหน่งจำลอง (เดโม)");
+    showToast("ใช้ตำแหน่งจำลองแบบสุ่ม");
+  }
   mapLocate.addEventListener("click", function(){
     if(!map) return;
-    if(!navigator.geolocation){ showToast("อุปกรณ์นี้ไม่รองรับการหาตำแหน่ง"); return; }
     mapLocate.classList.add("loading");
+    var done = false;
+    var giveUp = setTimeout(function(){
+      if(done) return;
+      done = true;
+      mapLocate.classList.remove("loading");
+      fakeLocation();
+    }, 7000);
+
+    if(!navigator.geolocation){
+      clearTimeout(giveUp); done = true;
+      mapLocate.classList.remove("loading");
+      fakeLocation();
+      return;
+    }
     navigator.geolocation.getCurrentPosition(function(pos){
+      if(done) return;
+      done = true; clearTimeout(giveUp);
       mapLocate.classList.remove("loading");
-      var ll = [pos.coords.latitude, pos.coords.longitude];
-      if(userMarker) userMarker.setLatLng(ll);
-      else userMarker = L.marker(ll, {icon:dotIcon("lme", 18), keyboard:false}).addTo(map).bindPopup("คุณอยู่ที่นี่");
-      map.flyTo(ll, 16, {duration:0.8});
-    }, function(err){
+      dropUser([pos.coords.latitude, pos.coords.longitude], "คุณอยู่ที่นี่");
+    }, function(){
+      if(done) return;
+      done = true; clearTimeout(giveUp);
       mapLocate.classList.remove("loading");
-      showToast(err.code === 1 ? "กรุณาอนุญาตให้เข้าถึงตำแหน่งก่อน" : "หาตำแหน่งไม่สำเร็จ ลองใหม่อีกครั้ง");
-    }, {enableHighAccuracy:true, timeout:9000, maximumAge:60000});
+      fakeLocation();
+    }, {enableHighAccuracy:true, timeout:6500, maximumAge:60000});
   });
 
   /* --- search places nationwide (Nominatim / OpenStreetMap) --- */
