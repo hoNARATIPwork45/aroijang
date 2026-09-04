@@ -321,6 +321,18 @@
   .lpin .num{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:12px;font-weight:800;color:var(--green-700)}
   .lme{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)}
   .lsearch{width:20px;height:20px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 0 0 5px rgba(220,38,38,.22)}
+  .map-style{
+    position:absolute;left:12px;bottom:22px;z-index:1000;
+    display:flex;gap:5px;background:var(--surface);padding:5px;border-radius:14px;
+    box-shadow:0 6px 18px rgba(16,40,25,.2);
+    max-width:calc(100% - 88px);overflow-x:auto;scrollbar-width:none;
+  }
+  .map-style::-webkit-scrollbar{display:none}
+  .map-style button{
+    flex:0 0 auto;padding:7px 11px;border-radius:10px;
+    font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;
+  }
+  .map-style button.is-active{background:var(--green-600);color:#fff}
   .map-locate{
     position:absolute;right:12px;bottom:20px;z-index:1000;
     width:52px;height:52px;border-radius:50%;background:var(--green-600);
@@ -510,6 +522,13 @@
              placeholder="ค้นหาสถานที่ / ที่อยู่ ทั่วประเทศ…" aria-label="ค้นหาสถานที่บนแผนที่">
       <svg class="map-search__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <div class="map-search__results" id="mapResults" role="listbox"></div>
+    </div>
+    <div class="map-style" id="mapStyle" role="group" aria-label="สไตล์แผนที่">
+      <button type="button" data-id="street" class="is-active">มาตรฐาน</button>
+      <button type="button" data-id="light">สว่าง</button>
+      <button type="button" data-id="dark">มืด</button>
+      <button type="button" data-id="osm">สีสด</button>
+      <button type="button" data-id="sat">ดาวเทียม</button>
     </div>
     <button class="map-locate" id="mapLocate" type="button" aria-label="ไปยังตำแหน่งของฉัน">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
@@ -728,8 +747,35 @@
   branchList.innerHTML = listHtml;
 
   /* --- Leaflet map (lazy init on first open) --- */
-  var map = null, userMarker = null, searchMarker = null;
+  var map = null, userMarker = null, searchMarker = null, tileLayer = null;
   var hasL = (typeof L !== "undefined");
+
+  var ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+  var BASEMAPS = [
+    {id:"street", label:"มาตรฐาน", url:ESRI+"World_Street_Map/MapServer/tile/{z}/{y}/{x}",              attr:"Tiles &copy; Esri", opts:{maxZoom:19}},
+    {id:"light",  label:"สว่าง",   url:ESRI+"Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",  attr:"Tiles &copy; Esri", opts:{maxZoom:16}},
+    {id:"dark",   label:"มืด",     url:ESRI+"Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",   attr:"Tiles &copy; Esri", opts:{maxZoom:16}},
+    {id:"osm",    label:"สีสด",    url:"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",            attr:"&copy; OpenStreetMap", opts:{maxZoom:19}},
+    {id:"sat",    label:"ดาวเทียม", url:ESRI+"World_Imagery/MapServer/tile/{z}/{y}/{x}",                 attr:"Tiles &copy; Esri", opts:{maxZoom:19}}
+  ];
+  function setBasemap(id){
+    if(!map) return;
+    var bm = null;
+    for(var i=0;i<BASEMAPS.length;i++){ if(BASEMAPS[i].id === id){ bm = BASEMAPS[i]; break; } }
+    if(!bm) bm = BASEMAPS[0];
+    if(tileLayer) map.removeLayer(tileLayer);
+    var o = {attribution: bm.attr};
+    for(var k in bm.opts) o[k] = bm.opts[k];
+    tileLayer = L.tileLayer(bm.url, o).addTo(map);
+    if(tileLayer.setZIndex) tileLayer.setZIndex(0);
+    document.querySelectorAll("#mapStyle button").forEach(function(btn){
+      btn.classList.toggle("is-active", btn.dataset.id === bm.id);
+    });
+  }
+  document.getElementById("mapStyle").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-id]");
+    if(b) setBasemap(b.dataset.id);
+  });
 
   function branchIcon(n){
     return L.divIcon({
@@ -747,9 +793,7 @@
     map = L.map("lmap", {zoomControl:false, attributionControl:true})
       .setView([13.2, 101.0], 6); // เริ่มที่มุมกว้างทั่วประเทศไทย
     L.control.zoom({position:"bottomright"}).addTo(map);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom:19, attribution:'&copy; OpenStreetMap'
-    }).addTo(map);
+    setBasemap("street");
 
     BRANCHES.forEach(function(b, i){
       b.marker = L.marker([b.lat, b.lng], {icon:branchIcon(i+1)}).addTo(map);
