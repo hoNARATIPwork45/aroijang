@@ -743,7 +743,7 @@
   function makeShop(lat, lng, brand, k){
     var closed = Math.random() < 0.14;
     var name = brand
-      ? "อิ่มจัง · สาขา" + pick(["ตลาดสด","หน้าปั๊ม","ริมคลอง","ชุมชน","ตรงข้ามโรงเรียน","หัวมุม","ในซอย","ตลาดนัด"])
+      ? "สาขา" + pick(["ตลาดสด","หน้าปั๊ม","ริมคลอง","ชุมชน","ตรงข้ามโรงเรียน","หัวมุม","ในซอย","ตลาดนัด"])
       : (Math.random() < 0.5 ? pick(PREFIX) + pick(OWNERS) : pick(DISHES) + " " + pick(OWNERS));
     return {
       brand: !!brand, name: name,
@@ -809,8 +809,8 @@
   var ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
   var BASEMAPS = [
     {id:"street", label:"มาตรฐาน", url:ESRI+"World_Street_Map/MapServer/tile/{z}/{y}/{x}",              attr:"Tiles &copy; Esri", opts:{maxZoom:19}},
-    {id:"light",  label:"สว่าง",   url:ESRI+"Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",  attr:"Tiles &copy; Esri", opts:{maxZoom:16}},
-    {id:"dark",   label:"มืด",     url:ESRI+"Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",   attr:"Tiles &copy; Esri", opts:{maxZoom:16}},
+    {id:"light",  label:"สว่าง",   url:ESRI+"Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",  attr:"Tiles &copy; Esri", opts:{maxZoom:19, maxNativeZoom:16}},
+    {id:"dark",   label:"มืด",     url:ESRI+"Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",   attr:"Tiles &copy; Esri", opts:{maxZoom:19, maxNativeZoom:16}},
     {id:"osm",    label:"สีสด",    url:"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",            attr:"&copy; OpenStreetMap", opts:{maxZoom:19}},
     {id:"sat",    label:"ดาวเทียม", url:ESRI+"World_Imagery/MapServer/tile/{z}/{y}/{x}",                 attr:"Tiles &copy; Esri", opts:{maxZoom:19}}
   ];
@@ -841,7 +841,7 @@
 
   function initMap(){
     if(map || !hasL) return;
-    map = L.map("lmap", {zoomControl:false, attributionControl:true})
+    map = L.map("lmap", {zoomControl:false, attributionControl:true, maxZoom:19})
       .setView([13.7563, 100.5018], 12);
     L.control.zoom({position:"bottomright"}).addTo(map);
     setBasemap("light");
