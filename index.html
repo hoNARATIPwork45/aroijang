@@ -26,6 +26,7 @@
     font-family:"Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
     background:var(--bg); color:var(--ink); line-height:1.5;
     font-size:16px; -webkit-font-smoothing:antialiased;
+    overflow-x:clip;
   }
   img{max-width:100%;display:block}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -70,7 +71,7 @@
   .brand:active{transform:scale(.92)}
   .brand img{width:64px;height:64px;object-fit:contain}
   .search{
-    flex:1; display:flex; align-items:center; gap:8px;
+    flex:1 1 0; min-width:0; display:flex; align-items:center; gap:8px;
     background:var(--bg); border:1px solid var(--line);
     border-radius:12px; padding:0 12px; height:44px;
   }
@@ -119,8 +120,9 @@
 
   /* ---------- Filter chips ---------- */
   .chips{
-    display:flex; gap:8px; overflow-x:auto; padding:8px 16px 4px;
-    scrollbar-width:none;
+    display:flex; flex-wrap:nowrap; gap:8px; overflow-x:auto; padding:8px 16px 4px;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
   }
   .chips::-webkit-scrollbar{display:none}
   .chip{
