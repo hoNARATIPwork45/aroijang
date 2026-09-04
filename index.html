@@ -254,21 +254,16 @@
   @media (min-width:700px){
     :root{--shell:768px}
     .grid{grid-template-columns:repeat(3,1fr)}
-    .banner-slide{aspect-ratio:3/1}
     .section-head h1{font-size:24px}
     .card-title{font-size:15px}
   }
   @media (min-width:1040px){
-    :root{--shell:1040px}
-    body{background:#eef2ee}
-    .shell{margin-block:0}
-    .grid{grid-template-columns:repeat(4,1fr)}
-    .banner-slide{aspect-ratio:3.4/1}
+    :root{--shell:100%}
+    .shell{box-shadow:none}
+    /* content rows stay centered & readable while the shell fills the screen */
+    .banner,.section-head,.chips,.grid{max-width:1360px;margin-inline:auto}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
     .mascot{width:140px;height:140px;margin-top:-60px}
-  }
-  @media (min-width:1240px){
-    :root{--shell:1200px}
-    .grid{grid-template-columns:repeat(5,1fr)}
   }
 
   @media (prefers-reduced-motion:reduce){
