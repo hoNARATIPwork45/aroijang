@@ -102,15 +102,16 @@
   /* ---------- Section head + mascot ---------- */
   .section-head{
     position:relative; padding:18px 16px 6px;
-    display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
   }
+  .section-head > div{padding-right:120px}
   .section-head h1{
     font-size:20px; font-weight:800; color:var(--green-700);
     letter-spacing:.2px;
   }
   .section-head p{font-size:13px;color:var(--muted);margin-top:2px}
   .mascot{
-    width:156px;height:156px;flex:0 0 auto;margin-top:-64px;margin-bottom:-10px;
+    position:absolute; right:6px; top:-56px;
+    width:156px;height:156px;
     filter:drop-shadow(0 6px 10px rgba(21,128,61,.22));
     animation:bob 3.5s ease-in-out infinite;
   }
@@ -263,7 +264,8 @@
     /* content rows stay centered & readable while the shell fills the screen */
     .banner,.section-head,.chips,.grid{max-width:1360px;margin-inline:auto}
     .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
-    .mascot{width:190px;height:190px;margin-top:-72px}
+    .mascot{width:190px;height:190px;top:-84px}
+    .section-head > div{padding-right:210px}
   }
 
   @media (prefers-reduced-motion:reduce){
