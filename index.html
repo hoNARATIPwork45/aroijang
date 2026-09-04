@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
     --green-700:#15803d; --green-600:#16a34a; --green-500:#22c55e;
@@ -266,21 +267,46 @@
   }
   .mapview__bar b{font-size:16px;color:var(--green-700);flex:1}
   .mapview__bar .count{font-size:12px;color:var(--muted);font-weight:700}
+  .map-search{position:relative;flex:0 0 auto;padding:8px 12px;border-bottom:1px solid var(--line)}
+  .map-search input{
+    width:100%;height:42px;border:1px solid var(--line);border-radius:12px;
+    padding:0 40px 0 14px;font-size:14px;background:var(--bg);color:var(--ink);
+  }
+  .map-search input:focus{outline:none;border-color:var(--green-500)}
+  .map-search__ico{
+    position:absolute;right:24px;top:50%;transform:translateY(-50%);
+    width:18px;height:18px;color:var(--muted);pointer-events:none;
+  }
+  .map-search__results{
+    position:absolute;left:12px;right:12px;top:56px;z-index:30;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 10px 26px rgba(0,0,0,.16);max-height:246px;overflow-y:auto;
+  }
+  .map-search__results:empty{display:none}
+  .map-search__results button{
+    display:block;width:100%;text-align:left;padding:11px 14px;
+    font-size:13px;line-height:1.4;color:var(--ink);border-bottom:1px solid var(--line);
+  }
+  .map-search__results button:last-child{border-bottom:none}
+  .map-search__results button:active{background:var(--green-50)}
   .mapview__map{
-    position:relative;flex:1 1 auto;min-height:0;background:#e3ebe1;
-    overflow:hidden;touch-action:none;cursor:grab;
+    position:relative;flex:1 1 auto;min-height:0;background:#e3ebe1;overflow:hidden;
   }
-  .mapview__map.is-panning{cursor:grabbing}
-  .mapview__world{
-    position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;
+  #lmap{position:absolute;inset:0;background:#e3ebe1}
+  .leaflet-container{font:inherit}
+  .lpin{position:relative;width:36px;height:46px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.3))}
+  .lpin svg{width:36px;height:46px;display:block}
+  .lpin .num{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:12px;font-weight:800;color:var(--green-700)}
+  .lme{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)}
+  .lsearch{width:20px;height:20px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 0 0 5px rgba(220,38,38,.22)}
+  .map-locate{
+    position:absolute;right:12px;bottom:18px;z-index:15;
+    width:48px;height:48px;border-radius:50%;background:var(--surface);
+    box-shadow:0 4px 14px rgba(0,0,0,.24);display:grid;place-items:center;color:var(--green-700);
   }
-  .mapview__world > svg{position:absolute;top:0;left:0;display:block}
-  .mapview__hint{
-    position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
-    background:rgba(15,25,18,.72);color:#fff;font-size:11px;font-weight:600;
-    padding:6px 12px;border-radius:99px;pointer-events:none;
-    transition:opacity .4s;
-  }
+  .map-locate svg{width:22px;height:22px}
+  .map-locate.loading svg{animation:spin 1s linear infinite}
+  .map-locate:active{background:var(--green-50)}
   .mapview__loading{
     position:absolute;inset:0;z-index:6;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
@@ -295,24 +321,6 @@
   .mapview__loading b{font-size:16px;color:var(--green-700)}
   .mapview__loading span{font-size:13px;color:var(--muted)}
   .mapview.ready .mapview__loading{opacity:0;visibility:hidden}
-  .mapview:not(.ready) .mapview__hint{opacity:0}
-  .mapview__me{
-    position:absolute;transform:translate(-50%,-50%);
-    width:18px;height:18px;border-radius:99px;background:#2563eb;border:3px solid #fff;
-    box-shadow:0 0 0 6px rgba(37,99,235,.22);
-  }
-  .mpin{
-    position:absolute;transform:translate(-50%,-100%);
-    width:36px;height:46px;
-    filter:drop-shadow(0 4px 5px rgba(0,0,0,.28));
-    transition:transform .16s cubic-bezier(.34,1.56,.64,1);
-  }
-  .mpin svg{width:36px;height:46px;display:block}
-  .mpin .num{
-    position:absolute;top:6px;left:0;right:0;text-align:center;
-    font-size:12px;font-weight:800;color:var(--green-700);
-  }
-  .mpin.is-active{transform:translate(-50%,-100%) scale(1.3);z-index:4}
   .mapview__list{
     flex:0 0 auto;max-height:44dvh;overflow-y:auto;
     -webkit-overflow-scrolling:touch;background:var(--surface);
@@ -463,19 +471,29 @@
     <span class="count" id="branchCount"></span>
   </header>
 
-  <div class="mapview__map" id="mapVp">
-    <div class="mapview__world" id="mapWorld"></div>
-    <div class="mapview__hint">ลากเพื่อเลื่อน · เลื่อนล้อ/นิ้วเพื่อซูม</div>
+  <div class="map-search">
+    <input id="mapSearch" type="search" autocomplete="off" enterkeyhint="search"
+           placeholder="ค้นหาสถานที่ / ที่อยู่ ทั่วประเทศ…" aria-label="ค้นหาสถานที่บนแผนที่">
+    <svg class="map-search__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <div class="map-search__results" id="mapResults" role="listbox"></div>
+  </div>
+
+  <div class="mapview__map">
+    <div id="lmap"></div>
+    <button class="map-locate" id="mapLocate" type="button" aria-label="ไปยังตำแหน่งของฉัน">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+    </button>
     <div class="mapview__loading" id="mapLoading">
       <img src="assets/mascot-hug.png" alt="">
       <b>กำลังหาร้านค้าใกล้คุณ…</b>
-      <span>กำลังเปิดตำแหน่งของคุณ</span>
+      <span>กำลังโหลดแผนที่และตำแหน่งของคุณ</span>
     </div>
   </div>
 
   <div class="mapview__list" id="branchList"></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -637,59 +655,27 @@
     });
   });
 
-  /* ---- Map view (full screen, pannable, multi-branch) ---- */
-  var WORLD_W = 1100, WORLD_H = 1600;
-  var ME = {x:470, y:840};
+  /* ---- Map view: real map (Leaflet + OpenStreetMap) ---- */
   var BRANCHES = [
-    {n:"สาขาสยาม",    a:"128 ถ.พระราม 1 แขวงปทุมวัน กรุงเทพฯ",     d:"1.2 กม.",  s:"เปิดอยู่ · ปิด 21:00 น.", closed:false, bx:520, by:700,  district:"ปทุมวัน",  img:"assets/banner-1.png", q:"13.7455,100.5331"},
-    {n:"สาขาอารีย์",   a:"45 ถ.พหลโยธิน ซอย 7 เขตพญาไท กรุงเทพฯ",   d:"2.6 กม.",  s:"เปิดอยู่ · ปิด 21:30 น.", closed:false, bx:330, by:400,  district:"พญาไท",   img:"assets/banner-2.png", q:"13.7797,100.5445"},
-    {n:"สาขาทองหล่อ",  a:"88 ถ.สุขุมวิท ซอย 55 เขตวัฒนา กรุงเทพฯ",  d:"4.1 กม.",  s:"เปิดอยู่ · ปิด 22:00 น.", closed:false, bx:790, by:540,  district:"วัฒนา",   img:"assets/banner-3.png", q:"13.7300,100.5810"},
-    {n:"สาขาลาดพร้าว", a:"200 ถ.ลาดพร้าว แขวงจอมพล เขตจตุจักร",      d:"6.8 กม.",  s:"เปิดอยู่ · ปิด 21:00 น.", closed:false, bx:690, by:1080, district:"จตุจักร",  img:"assets/banner-1.png", q:"13.8160,100.5760"},
-    {n:"สาขาบางนา",    a:"9 ถ.เทพรัตน กม.5 เขตบางนา กรุงเทพฯ",       d:"12.3 กม.", s:"ปิดแล้ว · เปิด 10:00 น.",  closed:true,  bx:270, by:1310, district:"บางนา",   img:"assets/banner-2.png", q:"13.6680,100.6040"}
+    {n:"สาขาสยาม",    a:"128 ถ.พระราม 1 แขวงปทุมวัน กรุงเทพฯ",    d:"1.2 กม.",  s:"เปิดอยู่ · ปิด 21:00 น.", closed:false, lat:13.7455, lng:100.5331, img:"assets/banner-1.png"},
+    {n:"สาขาอารีย์",   a:"45 ถ.พหลโยธิน ซอย 7 เขตพญาไท กรุงเทพฯ",  d:"2.6 กม.",  s:"เปิดอยู่ · ปิด 21:30 น.", closed:false, lat:13.7797, lng:100.5445, img:"assets/banner-2.png"},
+    {n:"สาขาทองหล่อ",  a:"88 ถ.สุขุมวิท ซอย 55 เขตวัฒนา กรุงเทพฯ", d:"4.1 กม.",  s:"เปิดอยู่ · ปิด 22:00 น.", closed:false, lat:13.7300, lng:100.5810, img:"assets/banner-3.png"},
+    {n:"สาขาลาดพร้าว", a:"200 ถ.ลาดพร้าว แขวงจอมพล เขตจตุจักร",     d:"6.8 กม.",  s:"เปิดอยู่ · ปิด 21:00 น.", closed:false, lat:13.8160, lng:100.5760, img:"assets/banner-1.png"},
+    {n:"สาขาบางนา",    a:"9 ถ.เทพรัตน กม.5 เขตบางนา กรุงเทพฯ",      d:"12.3 กม.", s:"ปิดแล้ว · เปิด 10:00 น.",  closed:true,  lat:13.6680, lng:100.6040, img:"assets/banner-2.png"}
   ];
 
   var mapBtn = document.getElementById("btnMap");
   var mapView = document.getElementById("mapView");
-  var mapVp = document.getElementById("mapVp");
-  var mapWorld = document.getElementById("mapWorld");
   var branchList = document.getElementById("branchList");
+  var mapLocate = document.getElementById("mapLocate");
+  var mapSearch = document.getElementById("mapSearch");
+  var mapResults = document.getElementById("mapResults");
   document.getElementById("branchCount").textContent = BRANCHES.length + " สาขา";
 
   var PIN = '<svg viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg">'+
     '<path d="M18 45C6 28 3 22 3 16A15 15 0 0 1 33 16C33 22 30 28 18 45Z" fill="#15803d"/>'+
     '<circle cx="18" cy="16" r="9.5" fill="#fff"/></svg>';
   var NAV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8-8-2Z"/></svg>';
-
-  /* --- build the world (faux street map) --- */
-  (function buildWorld(){
-    var s = '<svg width="'+WORLD_W+'" height="'+WORLD_H+'" viewBox="0 0 '+WORLD_W+' '+WORLD_H+'" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
-    s += '<rect width="'+WORLD_W+'" height="'+WORLD_H+'" fill="#e6ede4"/>';
-    s += '<rect x="620" y="40" width="360" height="300" rx="8" fill="#cfe6d2"/>';
-    s += '<rect x="70" y="560" width="300" height="220" rx="8" fill="#dfeadd"/>';
-    s += '<rect x="740" y="880" width="320" height="260" rx="8" fill="#cfe6d2"/>';
-    s += '<path d="M-40 1180 Q300 1120 620 1220 T1140 1200 V1660 H-40 Z" fill="#d7e8f5"/>';
-    var i;
-    s += '<g stroke="#ffffff" stroke-width="18" stroke-linecap="square">';
-    for(i=1;i<=8;i++) s += '<path d="M-40 '+(i*190)+' H'+(WORLD_W+40)+'"/>';
-    for(i=1;i<=5;i++) s += '<path d="M'+(i*195)+' -40 V'+(WORLD_H+40)+'"/>';
-    s += '</g>';
-    s += '<g stroke="#f4c34f" stroke-width="9"><path d="M-40 760 H'+(WORLD_W+40)+'"/><path d="M525 -40 V'+(WORLD_H+40)+'"/></g>';
-    s += '<g stroke="#eef3ee" stroke-width="4" stroke-dasharray="14 16">';
-    for(i=1;i<=9;i++) s += '<path d="M'+(i*110)+' -40 V'+(WORLD_H+40)+'"/>';
-    s += '</g>';
-    s += '<g fill="#9db4a3" font-family="inherit" font-size="26" font-weight="700" opacity="0.55">';
-    BRANCHES.forEach(function(b){ s += '<text x="'+(b.bx+22)+'" y="'+(b.by-38)+'">'+b.district+'</text>'; });
-    s += '</g></svg>';
-
-    var pins = "";
-    BRANCHES.forEach(function(b, k){
-      pins += '<button class="mpin" data-i="'+k+'" style="left:'+b.bx+'px;top:'+b.by+'px" aria-label="'+b.n+'">'+
-        PIN + '<span class="num">'+(k+1)+'</span></button>';
-    });
-    mapWorld.style.width = WORLD_W + "px";
-    mapWorld.style.height = WORLD_H + "px";
-    mapWorld.innerHTML = s + pins + '<span class="mapview__me" style="left:'+ME.x+'px;top:'+ME.y+'px" title="ตำแหน่งของคุณ"></span>';
-  })();
 
   /* --- branch list --- */
   var listHtml = "";
@@ -705,89 +691,114 @@
             '<span class="'+(b.closed ? "closed" : "open")+'">'+b.s+'</span>'+
           '</div>'+
         '</div>'+
-        '<a class="branch__nav" href="https://www.google.com/maps/search/?api=1&query='+b.q+'" target="_blank" rel="noopener" aria-label="นำทางไป '+b.n+'">'+NAV+'</a>'+
+        '<a class="branch__nav" href="https://www.google.com/maps/search/?api=1&query='+b.lat+','+b.lng+'" target="_blank" rel="noopener" aria-label="นำทางไป '+b.n+'">'+NAV+'</a>'+
       '</article>';
   });
   branchList.innerHTML = listHtml;
 
-  /* --- pan / zoom --- */
-  var tx = 0, ty = 0, scale = 1;
-  function applyView(anim){
-    mapWorld.style.transition = anim ? "transform .38s ease" : "";
-    mapWorld.style.transform = "translate("+tx+"px,"+ty+"px) scale("+scale+")";
-    if(anim) setTimeout(function(){ mapWorld.style.transition = ""; }, 400);
+  /* --- Leaflet map (lazy init on first open) --- */
+  var map = null, userMarker = null, searchMarker = null;
+  var hasL = (typeof L !== "undefined");
+
+  function branchIcon(n){
+    return L.divIcon({
+      className:"", html:'<div class="lpin">'+PIN+'<span class="num">'+n+'</span></div>',
+      iconSize:[36,46], iconAnchor:[18,46], popupAnchor:[0,-42]
+    });
   }
-  function clampView(){
-    var vw = mapVp.clientWidth, vh = mapVp.clientHeight;
-    var minS = Math.max(vw / WORLD_W, vh / WORLD_H);
-    scale = Math.min(Math.max(scale, minS), 3.2);
-    tx = Math.min(0, Math.max(tx, vw - WORLD_W * scale));
-    ty = Math.min(0, Math.max(ty, vh - WORLD_H * scale));
-  }
-  function centerOn(wx, wy, anim){
-    var vw = mapVp.clientWidth, vh = mapVp.clientHeight;
-    tx = vw / 2 - wx * scale;
-    ty = vh / 2 - wy * scale;
-    clampView(); applyView(anim);
-  }
-  function zoomAt(cx, cy, f){
-    var rect = mapVp.getBoundingClientRect();
-    var px = cx - rect.left, py = cy - rect.top;
-    var wx = (px - tx) / scale, wy = (py - ty) / scale;
-    scale *= f; clampView();
-    tx = px - wx * scale; ty = py - wy * scale;
-    clampView(); applyView(false);
+  function dotIcon(cls, size){
+    return L.divIcon({ className:"", html:'<div class="'+cls+'"></div>',
+      iconSize:[size,size], iconAnchor:[size/2,size/2] });
   }
 
-  var pointers = new Map(), pinchPrev = 0, panLast = null, moved = 0;
-  mapVp.addEventListener("pointerdown", function(e){
-    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
-    if(pointers.size === 1){ panLast = {x:e.clientX, y:e.clientY}; moved = 0; }
-  });
-  mapVp.addEventListener("pointermove", function(e){
-    if(!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
-    var pts = Array.from(pointers.values());
-    if(pts.length >= 2){
-      var dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      if(pinchPrev) zoomAt((pts[0].x + pts[1].x)/2, (pts[0].y + pts[1].y)/2, dist / pinchPrev);
-      pinchPrev = dist; panLast = null;
-    } else if(panLast){
-      var dx = e.clientX - panLast.x, dy = e.clientY - panLast.y;
-      moved += Math.abs(dx) + Math.abs(dy);
-      tx += dx; ty += dy; panLast = {x:e.clientX, y:e.clientY};
-      if(moved > 6) mapVp.classList.add("is-panning");
-      clampView(); applyView(false);
-    }
-  });
-  function endPointer(e){
-    pointers.delete(e.pointerId);
-    if(pointers.size < 2) pinchPrev = 0;
-    if(pointers.size === 0){ panLast = null; setTimeout(function(){ mapVp.classList.remove("is-panning"); }, 0); }
-  }
-  mapVp.addEventListener("pointerup", endPointer);
-  mapVp.addEventListener("pointercancel", endPointer);
-  mapVp.addEventListener("wheel", function(e){
-    e.preventDefault();
-    zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : 0.9);
-  }, {passive:false});
+  function initMap(){
+    if(map || !hasL) return;
+    map = L.map("lmap", {zoomControl:true, attributionControl:true})
+      .setView([13.2, 101.0], 6); // เริ่มที่มุมกว้างทั่วประเทศไทย
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom:19, attribution:'&copy; OpenStreetMap'
+    }).addTo(map);
 
-  /* --- select a branch --- */
-  function activateBranch(i, fly){
-    mapWorld.querySelectorAll(".mpin").forEach(function(p, k){ p.classList.toggle("is-active", k === i); });
+    BRANCHES.forEach(function(b, i){
+      b.marker = L.marker([b.lat, b.lng], {icon:branchIcon(i+1)}).addTo(map);
+      b.marker.bindPopup(
+        '<b>อิ่มจัง · '+b.n+'</b><br>'+b.a+'<br>'+b.s+
+        '<br><a href="https://www.google.com/maps/search/?api=1&query='+b.lat+','+b.lng+'" target="_blank" rel="noopener">นำทางด้วย Google Maps</a>'
+      );
+      b.marker.on("click", function(){ selectBranch(i, false); });
+    });
+    var grp = L.featureGroup(BRANCHES.map(function(b){ return b.marker; }));
+    map.fitBounds(grp.getBounds().pad(0.35));
+  }
+
+  function selectBranch(i, fly){
     branchList.querySelectorAll(".branch").forEach(function(c, k){ c.classList.toggle("is-active", k === i); });
     var card = branchList.querySelector('.branch[data-i="'+i+'"]');
     if(card) card.scrollIntoView({block:"nearest", behavior:"smooth"});
-    if(fly) centerOn(BRANCHES[i].bx, BRANCHES[i].by - 30, true);
+    if(map && fly){
+      map.flyTo([BRANCHES[i].lat, BRANCHES[i].lng], 15, {duration:0.6});
+      if(BRANCHES[i].marker) BRANCHES[i].marker.openPopup();
+    }
   }
-  mapWorld.addEventListener("click", function(e){
-    var p = e.target.closest(".mpin");
-    if(p && moved <= 6) activateBranch(+p.dataset.i, true);
-  });
   branchList.addEventListener("click", function(e){
     if(e.target.closest(".branch__nav")) return;
     var c = e.target.closest(".branch");
-    if(c) activateBranch(+c.dataset.i, true);
+    if(c) selectBranch(+c.dataset.i, true);
+  });
+
+  /* --- go to my real location --- */
+  mapLocate.addEventListener("click", function(){
+    if(!map) return;
+    if(!navigator.geolocation){ showToast("อุปกรณ์นี้ไม่รองรับการหาตำแหน่ง"); return; }
+    mapLocate.classList.add("loading");
+    navigator.geolocation.getCurrentPosition(function(pos){
+      mapLocate.classList.remove("loading");
+      var ll = [pos.coords.latitude, pos.coords.longitude];
+      if(userMarker) userMarker.setLatLng(ll);
+      else userMarker = L.marker(ll, {icon:dotIcon("lme", 18), keyboard:false}).addTo(map).bindPopup("คุณอยู่ที่นี่");
+      map.flyTo(ll, 16, {duration:0.8});
+    }, function(err){
+      mapLocate.classList.remove("loading");
+      showToast(err.code === 1 ? "กรุณาอนุญาตให้เข้าถึงตำแหน่งก่อน" : "หาตำแหน่งไม่สำเร็จ ลองใหม่อีกครั้ง");
+    }, {enableHighAccuracy:true, timeout:9000, maximumAge:60000});
+  });
+
+  /* --- search places nationwide (Nominatim / OpenStreetMap) --- */
+  var searchT = null;
+  mapSearch.addEventListener("input", function(){
+    clearTimeout(searchT);
+    var q = mapSearch.value.trim();
+    if(q.length < 3){ mapResults.innerHTML = ""; return; }
+    searchT = setTimeout(function(){ runSearch(q); }, 420);
+  });
+  function runSearch(q){
+    var url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=th&accept-language=th&q=" + encodeURIComponent(q);
+    fetch(url).then(function(r){ return r.json(); }).then(function(list){
+      if(!Array.isArray(list) || !list.length){
+        mapResults.innerHTML = '<button type="button" disabled>ไม่พบสถานที่</button>';
+        return;
+      }
+      mapResults.innerHTML = list.map(function(it){
+        return '<button type="button" data-lat="'+it.lat+'" data-lon="'+it.lon+'">'+
+          it.display_name.replace(/</g,"&lt;")+'</button>';
+      }).join("");
+    }).catch(function(){
+      mapResults.innerHTML = '<button type="button" disabled>ค้นหาไม่สำเร็จ (ตรวจอินเทอร์เน็ต)</button>';
+    });
+  }
+  mapResults.addEventListener("click", function(e){
+    var b = e.target.closest("button[data-lat]");
+    if(!b || !map) return;
+    var ll = [parseFloat(b.dataset.lat), parseFloat(b.dataset.lon)];
+    if(searchMarker) searchMarker.setLatLng(ll);
+    else searchMarker = L.marker(ll, {icon:dotIcon("lsearch", 20)}).addTo(map);
+    searchMarker.bindPopup(b.textContent).openPopup();
+    map.flyTo(ll, 15, {duration:0.7});
+    mapResults.innerHTML = "";
+    mapSearch.blur();
+  });
+  document.addEventListener("click", function(e){
+    if(!e.target.closest(".map-search")) mapResults.innerHTML = "";
   });
 
   /* --- open / close with mascot loading --- */
@@ -795,11 +806,11 @@
     mapView.hidden = false;
     document.body.style.overflow = "hidden";
     mapView.classList.remove("ready");
-    var wait = reduce ? 350 : 1700;
+    initMap();
+    var wait = reduce ? 350 : 1400;
     setTimeout(function(){
       mapView.classList.add("ready");
-      scale = 1; clampView();
-      centerOn(ME.x, ME.y, false);
+      if(map) map.invalidateSize();
     }, wait);
   }
   function closeMap(){ mapView.hidden = true; document.body.style.overflow = ""; mapBtn.focus(); }
