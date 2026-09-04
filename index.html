@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#16a34a">
+<title>อร่อยจัง · ตังเกือบครบ</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-700:#15803d; --green-600:#16a34a; --green-500:#22c55e;
+    --green-100:#dcfce7; --green-50:#f0fdf4;
+    --ink:#1a2e22; --muted:#5b6b60; --line:#e6ece7;
+    --bg:#f6f8f6; --surface:#ffffff;
+    --amber:#f59e0b; --danger:#dc2626;
+    --radius:16px; --shell:460px;
+    --safe-b:env(safe-area-inset-bottom,0px);
+    --nav-h:64px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:"Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5;
+    font-size:16px; -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%;display:block}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:3px solid var(--green-600);outline-offset:2px;border-radius:8px}
+
+  /* ---------- Shell ---------- */
+  .shell{
+    max-width:var(--shell); margin-inline:auto; min-height:100dvh;
+    background:var(--bg); position:relative;
+    box-shadow:0 0 40px rgba(0,0,0,.06);
+    padding-bottom:calc(var(--nav-h) + var(--safe-b) + 12px);
+  }
+
+  /* ---------- Brand title bar ---------- */
+  .brandbar{
+    background:var(--green-600); color:#fff; text-align:center;
+    padding:calc(6px + env(safe-area-inset-top,0px)) 12px 6px;
+    font-size:15px; font-weight:800; letter-spacing:1px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    background:var(--surface); border-bottom:1px solid var(--line);
+    padding:10px 12px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .icon-btn{
+    width:44px;height:44px;border-radius:12px;
+    display:grid;place-items:center;color:var(--green-700);
+    background:var(--green-50);flex:0 0 auto;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .icon-btn:active{transform:scale(.92);background:var(--green-100)}
+  .icon-btn svg{width:22px;height:22px}
+  .brand{
+    width:72px;height:72px;flex:0 0 auto;border-radius:16px;
+    display:grid;place-items:center;background:var(--green-50);
+    transition:transform .15s ease;
+  }
+  .brand:active{transform:scale(.92)}
+  .brand img{width:64px;height:64px;object-fit:contain}
+  .search{
+    flex:1; display:flex; align-items:center; gap:8px;
+    background:var(--bg); border:1px solid var(--line);
+    border-radius:12px; padding:0 12px; height:44px;
+  }
+  .search svg{width:18px;height:18px;color:var(--muted);flex:0 0 auto}
+  .search input{
+    border:none;background:none;flex:1;font-size:15px;color:var(--ink);
+    min-width:0;
+  }
+  .search input:focus{outline:none}
+
+  /* ---------- Banner carousel ---------- */
+  .banner{padding:12px 12px 0}
+  .banner-track{
+    display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    border-radius:var(--radius);
+  }
+  .banner-track::-webkit-scrollbar{display:none}
+  .banner-slide{
+    flex:0 0 100%; scroll-snap-align:center;
+    border-radius:var(--radius); overflow:hidden; aspect-ratio:27/10;
+    background:#e9efe9;
+  }
+  .banner-slide img{width:100%;height:100%;object-fit:cover}
+  .dots{display:flex;justify-content:center;gap:6px;padding:10px 0 2px}
+  .dot{width:7px;height:7px;border-radius:99px;background:var(--line);transition:width .2s,background .2s}
+  .dot.is-active{width:20px;background:var(--green-600)}
+
+  /* ---------- Section head + mascot ---------- */
+  .section-head{
+    position:relative; padding:18px 16px 6px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+  }
+  .section-head h1{
+    font-size:20px; font-weight:800; color:var(--green-700);
+    letter-spacing:.2px;
+  }
+  .section-head p{font-size:13px;color:var(--muted);margin-top:2px}
+  .mascot{
+    width:120px;height:120px;flex:0 0 auto;margin-top:-52px;margin-bottom:-8px;
+    filter:drop-shadow(0 6px 10px rgba(21,128,61,.22));
+    animation:bob 3.5s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  /* ---------- Filter chips ---------- */
+  .chips{
+    display:flex; gap:8px; overflow-x:auto; padding:8px 16px 4px;
+    scrollbar-width:none;
+  }
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto; padding:9px 16px; border-radius:99px;
+    background:var(--surface); border:1px solid var(--line);
+    font-size:14px; font-weight:600; color:var(--muted);
+    min-height:40px; transition:transform .12s ease;
+  }
+  .chip:active{transform:scale(.94)}
+  .chip.is-active{background:var(--green-600);color:#fff;border-color:var(--green-600)}
+
+  /* ---------- Product grid ---------- */
+  .grid{
+    display:grid; grid-template-columns:repeat(2,1fr);
+    gap:12px; padding:12px 16px 8px;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); overflow:hidden;
+    display:flex; flex-direction:column;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:active{transform:scale(.98)}
+  .card-media{position:relative;aspect-ratio:1/1;background:var(--green-50)}
+  .card-media svg{width:100%;height:100%}
+  .badge{
+    position:absolute; top:8px; left:8px;
+    background:var(--danger); color:#fff; font-size:11px; font-weight:700;
+    padding:3px 8px; border-radius:99px;
+  }
+  .badge.new{background:var(--green-600)}
+  .fav{
+    position:absolute; top:6px; right:6px; width:32px;height:32px;
+    border-radius:99px; background:rgba(255,255,255,.9);
+    display:grid;place-items:center;color:var(--muted);
+  }
+  .fav svg{width:16px;height:16px}
+  .fav.is-on{color:var(--danger)}
+  .card-body{padding:10px 10px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .card-title{font-size:14px;font-weight:600;line-height:1.35}
+  .rating{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+  .rating svg{width:13px;height:13px;color:var(--amber)}
+  .price-row{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .price{font-size:16px;font-weight:800;color:var(--green-700)}
+  .price small{font-size:11px;font-weight:500;color:var(--muted)}
+  .add{
+    width:38px;height:38px;border-radius:12px;background:var(--green-600);
+    color:#fff;display:grid;place-items:center;flex:0 0 auto;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .add svg{width:18px;height:18px}
+  .add:active{transform:scale(.88);background:var(--green-700)}
+
+  /* ---------- Sticker filler tile ---------- */
+  .sticker-tile{
+    display:grid; place-items:center; padding:10px;
+    min-height:100%;
+  }
+  .sticker-tile img{
+    width:100%; max-width:150px;
+    filter:drop-shadow(0 6px 12px rgba(21,128,61,.25));
+    transform-origin:50% 90%;
+    animation:wiggle 1.1s ease-in-out infinite;
+  }
+  @keyframes wiggle{
+    0%,100%{transform:rotate(-7deg) translateY(0) scale(1)}
+    15%{transform:rotate(7deg) translateY(-4px) scale(1.04)}
+    30%{transform:rotate(-6deg) translateY(0) scale(1)}
+    45%{transform:rotate(6deg) translateY(-3px) scale(1.03)}
+    60%{transform:rotate(-4deg) translateY(0) scale(1)}
+    75%{transform:rotate(3deg) translateY(-2px) scale(1.02)}
+  }
+
+  /* ---------- Ad card ---------- */
+  .ad-card{
+    grid-column:span 2; background:var(--surface);
+    border:1px dashed #c9d3cb; border-radius:var(--radius);
+    padding:16px; display:flex; align-items:center; gap:14px;
+  }
+  .ad-logo{width:44px;height:44px;flex:0 0 auto}
+  .ad-card .lbl{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.5px}
+  .ad-card .txt{font-size:14px;font-weight:600;color:var(--ink)}
+  .ad-card .sub{font-size:12px;color:var(--muted)}
+
+  /* ---------- Footer ---------- */
+  .foot{
+    margin-top:14px; background:var(--green-600); color:#fff;
+    padding:22px 16px; text-align:center;
+  }
+  .foot img{width:64px;margin:0 auto 8px;filter:brightness(0) invert(1)}
+  .foot p{font-size:12px;opacity:.9}
+
+  /* ---------- Bottom nav ---------- */
+  .bottomnav{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:0;
+    width:100%; max-width:var(--shell); z-index:50;
+    background:var(--surface); border-top:1px solid var(--line);
+    display:flex; justify-content:space-around;
+    padding:6px 4px calc(6px + var(--safe-b));
+    height:calc(var(--nav-h) + var(--safe-b));
+  }
+  .navitem{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:6px 0; color:var(--muted); font-size:11px; font-weight:600;
+    min-height:44px; position:relative;
+  }
+  .navitem--wrap{border-radius:12px;transition:background .15s}
+  .navitem:active{background:var(--green-50)}
+  .navitem svg{width:22px;height:22px}
+  .navitem.is-active{color:var(--green-600)}
+  .cart-count{
+    position:absolute; top:2px; left:calc(50% + 6px);
+    background:var(--danger); color:#fff; font-size:10px; font-weight:700;
+    min-width:16px; height:16px; border-radius:99px; display:grid; place-items:center;
+    padding:0 3px; transform:scale(0); transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .cart-count.show{transform:scale(1)}
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed; left:50%; bottom:calc(var(--nav-h) + var(--safe-b) + 16px);
+    transform:translate(-50%,20px); opacity:0; pointer-events:none;
+    background:var(--ink); color:#fff; font-size:13px; font-weight:600;
+    padding:10px 16px; border-radius:99px; z-index:60;
+    transition:transform .25s ease, opacity .25s ease;
+    display:flex; align-items:center; gap:8px;
+  }
+  .toast.show{transform:translate(-50%,0);opacity:1}
+  .toast svg{width:16px;height:16px;color:var(--green-500)}
+
+  /* ---------- Responsive: tablet & desktop ---------- */
+  @media (min-width:700px){
+    :root{--shell:768px}
+    .grid{grid-template-columns:repeat(3,1fr)}
+    .banner-slide{aspect-ratio:3/1}
+    .section-head h1{font-size:24px}
+    .card-title{font-size:15px}
+  }
+  @media (min-width:1040px){
+    :root{--shell:1040px}
+    body{background:#eef2ee}
+    .shell{margin-block:0}
+    .grid{grid-template-columns:repeat(4,1fr)}
+    .banner-slide{aspect-ratio:3.4/1}
+    .mascot{width:140px;height:140px;margin-top:-60px}
+  }
+  @media (min-width:1240px){
+    :root{--shell:1200px}
+    .grid{grid-template-columns:repeat(5,1fr)}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition-duration:.01ms!important}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Brand title -->
+  <div class="brandbar">อิ่มจัง ตังเกือบครบ</div>
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <button class="brand" aria-label="อร่อยจัง หน้าแรก">
+      <img src="assets/logo.png" alt="อร่อยจัง">
+    </button>
+    <form class="search" role="search" onsubmit="return false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="search" placeholder="ค้นหาเมนู ร้านอาหาร..." aria-label="ค้นหา">
+    </form>
+    <button class="icon-btn" aria-label="ตัวเลือกเพิ่มเติม">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+    </button>
+  </header>
+
+  <!-- Banner -->
+  <section class="banner" aria-label="โปรโมชั่นแนะนำ">
+    <div class="banner-track" id="bannerTrack">
+      <div class="banner-slide"><img src="assets/banner-1.png" alt="อาหารตามสั่ง กะเพราแท้ รสจัดจ้าน เริ่มต้น 50 บาท"></div>
+      <div class="banner-slide"><img src="assets/banner-2.png" alt="ก๋วยเตี๋ยวน้ำซุปเข้มข้น หอมเครื่องเทศ สูตรเด็ด 40 ปี"></div>
+      <div class="banner-slide"><img src="assets/banner-3.png" alt="ผักสด ฟาร์มผักออร์แกนิก จากธรรมชาติสู่มือคุณ"></div>
+    </div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+  </section>
+
+  <!-- Section head + mascot -->
+  <div class="section-head">
+    <div>
+      <h1>เลือกดูเมนู</h1>
+      <p>เมนูเด็ด คัดมาให้แล้ว อร่อยครบทุกจาน</p>
+    </div>
+    <img class="mascot" src="assets/mascot-peace.png" alt="มาสคอตอร่อยจังชูสองนิ้ว">
+  </div>
+
+  <!-- Filter chips -->
+  <nav class="chips" id="chips" aria-label="ตัวกรองหมวดหมู่">
+    <button class="chip is-active">ทั้งหมด</button>
+    <button class="chip">ยอดนิยม</button>
+    <button class="chip">เมนูใหม่</button>
+    <button class="chip">โปรโมชั่น</button>
+    <button class="chip">ตามสั่ง</button>
+    <button class="chip">เส้น</button>
+  </nav>
+
+  <!-- Product grid -->
+  <main class="grid" id="grid"></main>
+
+  <!-- Footer -->
+  <footer class="foot">
+    <img src="assets/logo.png" alt="อร่อยจัง">
+    <p>อร่อยจัง · ตังเกือบครบ — สั่งง่าย อิ่มคุ้ม ทุกมื้อ</p>
+    <p style="margin-top:6px">© 2568 อร่อยจัง. สงวนลิขสิทธิ์.</p>
+  </footer>
+
+</div>
+
+<!-- Bottom nav -->
+<nav class="bottomnav" aria-label="เมนูหลัก">
+  <button class="navitem is-active" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+    หน้าแรก
+  </button>
+  <button class="navitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    หมวดหมู่
+  </button>
+  <button class="navitem" id="navCart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.4 12.4a1.5 1.5 0 0 0 1.5 1.2h8.7a1.5 1.5 0 0 0 1.5-1.2L22 7H6"/></svg>
+    ตะกร้า
+    <span class="cart-count" id="cartCount">0</span>
+  </button>
+  <button class="navitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6C19 16.5 12 21 12 21z"/></svg>
+    รายการโปรด
+  </button>
+  <button class="navitem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    บัญชี
+  </button>
+</nav>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+  <span id="toastMsg">เพิ่มลงตะกร้าแล้ว</span>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---- Menu data ---- */
+  var CAT = {rice:["#fef3c7","#fbbf24"], noodle:["#fee2e2","#f87171"], salad:["#dcfce7","#4ade80"]};
+  function dish(cat){
+    var c = CAT[cat] || CAT.rice;
+    return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'+
+      '<rect width="100" height="100" fill="'+c[0]+'"/>'+
+      '<circle cx="50" cy="58" r="30" fill="#fff"/>'+
+      '<circle cx="50" cy="58" r="30" fill="none" stroke="'+c[1]+'" stroke-width="3"/>'+
+      '<circle cx="50" cy="58" r="21" fill="'+c[1]+'" opacity=".85"/>'+
+      '<circle cx="42" cy="52" r="4" fill="#fff" opacity=".7"/>'+
+      '<path d="M30 30c6-6 12-6 18 0" stroke="'+c[1]+'" stroke-width="3" fill="none" stroke-linecap="round"/>'+
+      '</svg>';
+  }
+
+  var ITEMS = [
+    {n:"ข้าวกะเพราหมูสับไข่ดาว", c:"rice",   p:60, r:4.9, s:1200, tag:"ขายดี"},
+    {n:"ข้าวผัดอเมริกัน",        c:"rice",   p:75, r:4.7, s:860,  tag:""},
+    {n:"ก๋วยเตี๋ยวเนื้อตุ๋น",     c:"noodle", p:70, r:4.9, s:1500, tag:"ขายดี"},
+    {n:"ผัดไทยกุ้งสด",           c:"noodle", p:65, r:4.6, s:720,  tag:""},
+    {n:"สลัดอกไก่ออร์แกนิก",     c:"salad",  p:89, r:4.8, s:540,  tag:"ใหม่"},
+    {n:"ข้าวผัดกะเพราไก่ทอด",    c:"rice",   p:69, r:4.8, s:990,  tag:""},
+    {n:"เย็นตาโฟทรงเครื่อง",     c:"noodle", p:70, r:4.7, s:610,  tag:""},
+    {n:"ตำไทยไข่เค็ม",           c:"salad",  p:55, r:4.9, s:1320, tag:"ขายดี"},
+    {n:"ข้าวหมูกรอบคั่วพริกเกลือ",c:"rice",  p:75, r:4.6, s:430,  tag:""},
+    {n:"บะหมี่เกี๊ยวหมูแดง",     c:"noodle", p:60, r:4.7, s:880,  tag:""},
+    {n:"ยำวุ้นเส้นรวมมิตร",      c:"salad",  p:65, r:4.8, s:700,  tag:"ใหม่"},
+    {n:"ข้าวไข่ข้นกุ้ง",         c:"rice",   p:79, r:4.9, s:1010, tag:"ขายดี"}
+  ];
+
+  var grid = document.getElementById("grid");
+  var html = "";
+  ITEMS.forEach(function(it, i){
+    var badge = it.tag === "ใหม่" ? '<span class="badge new">ใหม่</span>'
+              : it.tag === "ขายดี" ? '<span class="badge">ขายดี</span>' : "";
+    html +=
+      '<article class="card">'+
+        '<div class="card-media">'+ dish(it.c) + badge +
+          '<button class="fav" aria-label="เพิ่ม '+it.n+' ในรายการโปรด" data-fav>'+
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6C19 16.5 12 21 12 21z"/></svg>'+
+          '</button>'+
+        '</div>'+
+        '<div class="card-body">'+
+          '<div class="card-title">'+it.n+'</div>'+
+          '<div class="rating">'+
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>'+
+            it.r.toFixed(1)+' · ขายแล้ว '+it.s.toLocaleString("th-TH")+
+          '</div>'+
+          '<div class="price-row">'+
+            '<div class="price">฿'+it.p+' <small>/ จาน</small></div>'+
+            '<button class="add" aria-label="เพิ่ม '+it.n+' ลงตะกร้า" data-add data-name="'+it.n+'">'+
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'+
+            '</button>'+
+          '</div>'+
+        '</div>'+
+      '</article>';
+
+    if(i === 6){
+      html +=
+        '<div class="sticker-tile" aria-hidden="true">'+
+          '<img src="assets/mascot-angry.png" alt="">'+
+        '</div>'+
+        '<div class="ad-card">'+
+          '<img class="ad-logo" src="assets/logo.png" alt="">'+
+          '<div>'+
+            '<div class="lbl">โฆษณา · ADS</div>'+
+            '<div class="txt">ลงโฆษณาร้านของคุณกับอร่อยจัง</div>'+
+            '<div class="sub">เข้าถึงลูกค้าหิวโซใกล้ร้านคุณทันที</div>'+
+          '</div>'+
+        '</div>';
+    }
+  });
+  grid.innerHTML = html;
+
+  /* ---- Cart ---- */
+  var count = 0;
+  var cc = document.getElementById("cartCount");
+  var toast = document.getElementById("toast");
+  var toastMsg = document.getElementById("toastMsg");
+  var tHide;
+
+  function showToast(msg){
+    toastMsg.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(tHide);
+    tHide = setTimeout(function(){ toast.classList.remove("show"); }, 2200);
+  }
+
+  grid.addEventListener("click", function(e){
+    var add = e.target.closest("[data-add]");
+    if(add){
+      count++;
+      cc.textContent = count;
+      cc.classList.add("show");
+      cc.style.animation = "none"; cc.offsetWidth; cc.style.animation = "";
+      showToast("เพิ่ม “"+add.dataset.name+"” ลงตะกร้าแล้ว");
+      if(navigator.vibrate) navigator.vibrate(12);
+      return;
+    }
+    var fav = e.target.closest("[data-fav]");
+    if(fav){ fav.classList.toggle("is-on"); }
+  });
+
+  /* ---- Filter chips ---- */
+  var chips = document.getElementById("chips");
+  chips.addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if(!chip) return;
+    chips.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("is-active"); });
+    chip.classList.add("is-active");
+  });
+
+  /* ---- Banner carousel ---- */
+  var track = document.getElementById("bannerTrack");
+  var slides = track.children.length;
+  var dotsWrap = document.getElementById("dots");
+  for(var d=0; d<slides; d++){
+    var dot = document.createElement("span");
+    dot.className = "dot" + (d===0 ? " is-active" : "");
+    dotsWrap.appendChild(dot);
+  }
+  var dots = dotsWrap.children;
+  var idx = 0, timer;
+
+  function goTo(i){
+    idx = (i + slides) % slides;
+    track.scrollTo({ left: track.clientWidth * idx, behavior: "smooth" });
+  }
+  function sync(){
+    var i = Math.round(track.scrollLeft / track.clientWidth);
+    if(i === idx) return;
+    idx = i;
+    for(var k=0;k<dots.length;k++) dots[k].classList.toggle("is-active", k===idx);
+  }
+  track.addEventListener("scroll", function(){
+    window.requestAnimationFrame(sync);
+  }, {passive:true});
+
+  var reduce = window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  function auto(){
+    if(reduce) return;
+    timer = setInterval(function(){ goTo(idx+1); }, 4000);
+  }
+  function stop(){ clearInterval(timer); }
+  track.addEventListener("touchstart", stop, {passive:true});
+  track.addEventListener("touchend", function(){ stop(); auto(); }, {passive:true});
+  auto();
+
+  /* ---- Bottom nav active state ---- */
+  document.querySelectorAll(".bottomnav .navitem").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".bottomnav .navitem").forEach(function(x){
+        x.classList.remove("is-active"); x.removeAttribute("aria-current");
+      });
+      b.classList.add("is-active"); b.setAttribute("aria-current","page");
+    });
+  });
+})();
+</script>
+</body>
+</html>
