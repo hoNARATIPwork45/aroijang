@@ -734,8 +734,10 @@
     return {lat: loc.lat + dLat, lng: loc.lng + dLng};
   }
 
+  var OPENS = ["08:00","09:00","10:00","11:00","16:00","17:00"];
   function makeShop(lat, lng, brand, k){
-    var closed = Math.random() < 0.14;
+    var closed = Math.random() < 0.32;
+    var openAt = pick(OPENS);
     var name = brand
       ? "สาขา" + pick(["ตลาดสด","หน้าปั๊ม","ริมคลอง","ชุมชน","ตรงข้ามโรงเรียน","หัวมุม","ในซอย","ตลาดนัด"])
       : (Math.random() < 0.5 ? pick(PREFIX) + pick(OWNERS) : pick(DISHES) + " " + pick(OWNERS));
@@ -746,8 +748,8 @@
       rating: rnd(3.8, 5.0),
       sold: Math.floor(rnd(40, 3200)),
       price: "฿".repeat(1 + Math.floor(Math.random()*3)),
-      closed: closed,
-      s: closed ? "ปิดแล้ว · เปิด 10:00 น." : "เปิดอยู่ · ปิด " + pick(CLOSES) + " น.",
+      closed: closed, openAt: openAt,
+      s: closed ? "ปิดแล้ว · เปิด " + openAt + " น." : "เปิดอยู่ · ปิด " + pick(CLOSES) + " น.",
       img: IMGS[k % IMGS.length]
     };
   }
@@ -906,7 +908,7 @@
       map.flyTo([sp.lat, sp.lng], 16, {duration:0.6});
       setTimeout(function(){ if(sp.marker) sp.marker.openPopup(); }, 620);
     }
-    if(sp.closed) showToast("ร้านนี้ปิดอยู่ · เปิด 10:00 น.");
+    if(sp.closed) showToast("ร้านนี้ปิดอยู่ · เปิด " + sp.openAt + " น.");
   }
   branchList.addEventListener("click", function(e){
     if(e.target.closest(".branch__nav")) return;
