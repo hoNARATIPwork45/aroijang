@@ -329,6 +329,21 @@
   #lmap .marker-cluster div{background:var(--green-600);color:#fff;font-weight:800}
   #lmap .marker-cluster span{line-height:30px}
   .lsearch{width:20px;height:20px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 0 0 5px rgba(220,38,38,.22)}
+  .route-info{
+    position:absolute;top:74px;left:50%;transform:translateX(-50%);z-index:1100;
+    display:flex;align-items:center;gap:9px;max-width:calc(100% - 24px);
+    background:var(--surface);border-radius:99px;padding:7px 7px 7px 14px;
+    box-shadow:0 6px 20px rgba(16,40,25,.22);
+    font-size:13px;font-weight:800;white-space:nowrap;
+  }
+  .route-info[hidden]{display:none}
+  .route-info > svg{width:18px;height:18px;color:var(--green-600);flex:0 0 auto}
+  .route-info .rt{color:var(--muted);font-weight:600}
+  .route-info button{
+    width:28px;height:28px;border-radius:50%;background:var(--bg);color:var(--muted);
+    display:grid;place-items:center;flex:0 0 auto;
+  }
+  .route-info button svg{width:14px;height:14px}
   .map-locate{
     position:absolute;right:12px;bottom:20px;z-index:1000;
     width:52px;height:52px;border-radius:50%;background:var(--green-600);
@@ -570,6 +585,13 @@
              placeholder="ค้นหาสถานที่ / ที่อยู่ ทั่วประเทศ…" aria-label="ค้นหาสถานที่บนแผนที่">
       <svg class="map-search__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <div class="map-search__results" id="mapResults" role="listbox"></div>
+    </div>
+    <div class="route-info" id="routeInfo" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 0 1-2-2v-3l2-5h14l2 5v3a2 2 0 0 1-2 2M7 17v2M17 17v2"/><circle cx="7.5" cy="13.5" r="1"/><circle cx="16.5" cy="13.5" r="1"/></svg>
+      <span id="routeDist"></span><span class="rt" id="routeTime"></span>
+      <button type="button" id="routeClear" aria-label="ล้างเส้นทาง">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
     </div>
     <button class="map-locate" id="mapLocate" type="button" aria-label="ไปยังตำแหน่งของฉัน">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
@@ -1018,6 +1040,60 @@
     }).join("");
   }
 
+  /* --- เส้นทาง + ระยะทาง/เวลา (OSRM) --- */
+  var routeLayer = null, routeReq = 0;
+  var routeInfo  = document.getElementById("routeInfo");
+  var routeDistEl = document.getElementById("routeDist");
+  var routeTimeEl = document.getElementById("routeTime");
+
+  function clearRoute(){
+    if(routeLayer){ map.removeLayer(routeLayer); routeLayer = null; }
+    routeInfo.hidden = true;
+  }
+  function fmtDur(sec){
+    var m = Math.max(1, Math.round(sec / 60));
+    return m < 60 ? m + " นาที" : Math.floor(m/60) + " ชม. " + (m % 60) + " นาที";
+  }
+  function setRouteInfo(km, sec, approx){
+    routeDistEl.textContent = fmtKm(km);
+    routeTimeEl.textContent = "· " + fmtDur(sec) + (approx ? " (ประมาณ)" : "");
+    routeInfo.hidden = false;
+    var rv = document.getElementById("ssRouteVal");
+    if(rv) rv.textContent = fmtKm(km) + " · ใช้เวลา " + fmtDur(sec) + (approx ? " (ประมาณ)" : "");
+  }
+  function drawRoute(latlngs, dashed){
+    if(routeLayer) map.removeLayer(routeLayer);
+    routeLayer = L.featureGroup([
+      L.polyline(latlngs, {color:"#ffffff", weight:10, opacity:.95}),
+      L.polyline(latlngs, {color:"#16a34a", weight:5, opacity:1, dashArray: dashed ? "8 10" : null})
+    ]).addTo(map);
+    var pad = shopSheetOpen() ? [10, 300] : [30, 40];
+    map.fitBounds(L.latLngBounds(latlngs), {paddingTopLeft:[30, 90], paddingBottomRight:pad});
+  }
+  function shopSheetOpen(){
+    var el = document.getElementById("shopSheet");
+    return el && !el.hidden;
+  }
+  function showRoute(sp){
+    if(!map || !USER) return;
+    var id = ++routeReq;
+    var straight = [[USER.lat, USER.lng], [sp.lat, sp.lng]];
+    drawRoute(straight, true);
+    setRouteInfo(sp.dist, sp.dist / 24 * 3600, true);   // ประมาณ 24 กม./ชม.
+    var url = "https://router.project-osrm.org/route/v1/driving/" +
+              USER.lng + "," + USER.lat + ";" + sp.lng + "," + sp.lat +
+              "?overview=full&geometries=geojson";
+    fetch(url).then(function(r){ return r.json(); }).then(function(d){
+      if(id !== routeReq) return;
+      var r0 = d && d.routes && d.routes[0];
+      if(!r0 || !r0.geometry) return;
+      var pts = r0.geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
+      drawRoute(pts, false);
+      setRouteInfo(r0.distance / 1000, r0.duration, false);
+    }).catch(function(){});
+  }
+  document.getElementById("routeClear").addEventListener("click", clearRoute);
+
   function selectShop(i, fly){
     var sp = SHOPS[i];
     if(!sp) return;
@@ -1026,7 +1102,7 @@
     });
     var card = branchList.querySelector('.branch[data-i="'+i+'"]');
     if(card) card.scrollIntoView({block:"nearest", behavior:"smooth"});
-    if(map && fly) map.flyTo([sp.lat, sp.lng], 16, {duration:0.6});
+    showRoute(sp);
   }
   branchList.addEventListener("click", function(e){
     if(e.target.closest(".branch__nav")) return;
@@ -1043,7 +1119,8 @@
     pin:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
     clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
     phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.8a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.8 2.1Z"/></svg>',
-    dish: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 16 0Z"/><path d="M3 17h18"/><path d="M12 5V3"/></svg>'
+    dish: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 16 0Z"/><path d="M3 17h18"/><path d="M12 5V3"/></svg>',
+    car:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 0 1-2-2v-3l2-5h14l2 5v3a2 2 0 0 1-2 2M7 17v2M17 17v2"/></svg>'
   };
   function row(icon, k, v){
     return '<div class="ss-row">'+icon+'<div><div class="k">'+k+'</div><div class="v">'+v+'</div></div></div>';
@@ -1069,14 +1146,21 @@
           ? "ปิดอยู่ · เปิด " + sp.openAt + " น."
           : "เปิดอยู่ · ปิด " + sp.closeAt + " น.") +
       row(ICO.phone, "เบอร์โทร", sp.phone) +
-      row(ICO.dish, "ประเภทอาหาร", sp.cuisine);
+      row(ICO.dish, "ประเภทอาหาร", sp.cuisine) +
+      row(ICO.car, "เส้นทางขับรถ", '<span id="ssRouteVal">กำลังคำนวณเส้นทาง…</span>');
     document.getElementById("ssCall").href = "tel:" + tel;
     document.getElementById("ssMsg").href = "sms:" + tel;
     document.getElementById("ssNav").href =
       "https://www.google.com/maps/search/?api=1&query=" + sp.lat + "," + sp.lng;
     shopSheet.hidden = false;
+    showRoute(sp);
   }
-  function closeShopSheet(){ shopSheet.hidden = true; }
+  function closeShopSheet(){
+    shopSheet.hidden = true;
+    if(routeLayer && map){
+      try{ map.fitBounds(routeLayer.getBounds(), {paddingTopLeft:[30,90], paddingBottomRight:[30,40]}); }catch(e){}
+    }
+  }
   shopSheet.addEventListener("click", function(e){
     if(e.target.closest("[data-shopclose]")) closeShopSheet();
   });
