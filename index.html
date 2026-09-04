@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css">
 <style>
   :root{
     --green-700:#15803d; --green-600:#16a34a; --green-500:#22c55e;
@@ -318,8 +320,13 @@
   #lmap .leaflet-popup-content a{color:var(--green-600);font-weight:700}
   .lpin{position:relative;width:36px;height:46px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.3))}
   .lpin svg{width:36px;height:46px;display:block}
-  .lpin .num{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:12px;font-weight:800;color:var(--green-700)}
+  .lpin--brand{width:34px;height:44px}
+  .lpin--brand svg{width:34px;height:44px}
+  .shop-dot{width:14px;height:14px;border-radius:50%;background:#f59e0b;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.4)}
   .lme{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)}
+  #lmap .marker-cluster{background:rgba(21,128,61,.28)}
+  #lmap .marker-cluster div{background:var(--green-600);color:#fff;font-weight:800}
+  #lmap .marker-cluster span{line-height:30px}
   .lsearch{width:20px;height:20px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 0 0 5px rgba(220,38,38,.22)}
   .map-locate{
     position:absolute;right:12px;bottom:20px;z-index:1000;
@@ -369,6 +376,7 @@
   .branch__info h3{font-size:14px;font-weight:700}
   .branch__info .addr{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
   .branch__meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:12px;font-weight:700}
+  .branch__meta .rate{color:#f59e0b}
   .branch__meta .dist{color:var(--green-700)}
   .branch__meta .open{color:var(--green-600)}
   .branch__meta .closed{color:#dc2626}
@@ -525,6 +533,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -686,62 +695,85 @@
     });
   });
 
-  /* ---- Map view: real map (Leaflet + OpenStreetMap) ---- */
-  /* --- สุ่มสาขาร้านกระจายทั่วประเทศ --- */
+  /* ---- Map view: ร้านอาหารใกล้ฉัน (Leaflet + OpenStreetMap) ---- */
   var CITIES = [
-    {n:"สยาม",         lat:13.7455, lng:100.5331, prov:"กรุงเทพมหานคร"},
-    {n:"ลาดพร้าว",     lat:13.8160, lng:100.5760, prov:"กรุงเทพมหานคร"},
-    {n:"นนทบุรี",      lat:13.8622, lng:100.5144, prov:"นนทบุรี"},
-    {n:"รังสิต",       lat:14.0208, lng:100.7250, prov:"ปทุมธานี"},
-    {n:"ศรีราชา",      lat:13.1740, lng:100.9300, prov:"ชลบุรี"},
-    {n:"พัทยา",        lat:12.9236, lng:100.8825, prov:"ชลบุรี"},
-    {n:"ระยอง",        lat:12.6833, lng:101.2372, prov:"ระยอง"},
-    {n:"อยุธยา",       lat:14.3692, lng:100.5877, prov:"พระนครศรีอยุธยา"},
-    {n:"โคราช",        lat:14.9799, lng:102.0978, prov:"นครราชสีมา"},
-    {n:"ขอนแก่น",      lat:16.4419, lng:102.8360, prov:"ขอนแก่น"},
-    {n:"อุดรธานี",     lat:17.4139, lng:102.7870, prov:"อุดรธานี"},
-    {n:"อุบลราชธานี",  lat:15.2448, lng:104.8473, prov:"อุบลราชธานี"},
-    {n:"เชียงใหม่",    lat:18.7883, lng:98.9853,  prov:"เชียงใหม่"},
-    {n:"เชียงราย",     lat:19.9105, lng:99.8406,  prov:"เชียงราย"},
-    {n:"พิษณุโลก",     lat:16.8211, lng:100.2659, prov:"พิษณุโลก"},
-    {n:"นครสวรรค์",    lat:15.7047, lng:100.1372, prov:"นครสวรรค์"},
-    {n:"หัวหิน",       lat:12.5684, lng:99.9577,  prov:"ประจวบคีรีขันธ์"},
-    {n:"ภูเก็ต",       lat:7.8804,  lng:98.3923,  prov:"ภูเก็ต"},
-    {n:"กระบี่",       lat:8.0863,  lng:98.9063,  prov:"กระบี่"},
-    {n:"สุราษฎร์ธานี", lat:9.1382,  lng:99.3217,  prov:"สุราษฎร์ธานี"},
-    {n:"หาดใหญ่",      lat:7.0084,  lng:100.4767, prov:"สงขลา"},
-    {n:"นครศรีธรรมราช",lat:8.4304,  lng:99.9631,  prov:"นครศรีธรรมราช"}
+    {n:"กรุงเทพฯ", lat:13.7563, lng:100.5018, prov:"กรุงเทพมหานคร"},
+    {n:"นนทบุรี",  lat:13.8622, lng:100.5144, prov:"นนทบุรี"},
+    {n:"รังสิต",   lat:14.0208, lng:100.7250, prov:"ปทุมธานี"},
+    {n:"ชลบุรี",   lat:13.3611, lng:100.9847, prov:"ชลบุรี"},
+    {n:"พัทยา",    lat:12.9236, lng:100.8825, prov:"ชลบุรี"},
+    {n:"ระยอง",    lat:12.6833, lng:101.2372, prov:"ระยอง"},
+    {n:"อยุธยา",   lat:14.3692, lng:100.5877, prov:"พระนครศรีอยุธยา"},
+    {n:"โคราช",    lat:14.9799, lng:102.0978, prov:"นครราชสีมา"},
+    {n:"ขอนแก่น",  lat:16.4419, lng:102.8360, prov:"ขอนแก่น"},
+    {n:"อุดรธานี", lat:17.4139, lng:102.7870, prov:"อุดรธานี"},
+    {n:"อุบลฯ",    lat:15.2448, lng:104.8473, prov:"อุบลราชธานี"},
+    {n:"เชียงใหม่",lat:18.7883, lng:98.9853,  prov:"เชียงใหม่"},
+    {n:"เชียงราย", lat:19.9105, lng:99.8406,  prov:"เชียงราย"},
+    {n:"พิษณุโลก", lat:16.8211, lng:100.2659, prov:"พิษณุโลก"},
+    {n:"นครสวรรค์",lat:15.7047, lng:100.1372, prov:"นครสวรรค์"},
+    {n:"หัวหิน",   lat:12.5684, lng:99.9577,  prov:"ประจวบคีรีขันธ์"},
+    {n:"ภูเก็ต",   lat:7.8804,  lng:98.3923,  prov:"ภูเก็ต"},
+    {n:"กระบี่",   lat:8.0863,  lng:98.9063,  prov:"กระบี่"},
+    {n:"สุราษฎร์ฯ",lat:9.1382,  lng:99.3217,  prov:"สุราษฎร์ธานี"},
+    {n:"หาดใหญ่",  lat:7.0084,  lng:100.4767, prov:"สงขลา"}
   ];
-  var ROADS = ["ถ.มิตรภาพ","ถ.สุขุมวิท","ถ.เพชรเกษม","ถ.พหลโยธิน","ถ.นิมมานเหมินท์","ถ.ราชดำเนิน","ถ.เลี่ยงเมือง","ถ.รอบเมือง","ถ.ประชาสงเคราะห์"];
-  var CLOSES = ["20:00","20:30","21:00","21:30","22:00"];
-  var IMGS = ["assets/banner-1.png","assets/banner-2.png","assets/banner-3.png"];
-  var HOME = {lat:13.7563, lng:100.5018}; // จุดอ้างอิงระยะทาง (กรุงเทพฯ)
+  var ROADS   = ["ถ.สุขุมวิท","ถ.เพชรเกษม","ถ.พหลโยธิน","ถ.รัชดาภิเษก","ถ.ลาดพร้าว","ถ.นิมมานเหมินท์","ถ.มิตรภาพ","ถ.รอบเมือง","ถ.ประชาราษฎร์","ซ.อารีย์"];
+  var CLOSES  = ["20:00","20:30","21:00","21:30","22:00","23:00"];
+  var IMGS    = ["assets/banner-1.png","assets/banner-2.png","assets/banner-3.png"];
+  var DISHES  = ["ก๋วยเตี๋ยว","ข้าวมันไก่","ส้มตำ","อาหารตามสั่ง","ข้าวหมูแดง","ก๋วยจั๊บ","หมูกระทะ","ชาบู","ข้าวต้ม","ผัดไทย","โจ๊ก","ข้าวขาหมู","ต้มเลือดหมู","เย็นตาโฟ","ไก่ทอด","สเต๊ก"];
+  var OWNERS  = ["ป้าแดง","เจ๊หมวย","ลุงหนวด","แม่ศรี","พี่ต้อม","เฮียเล้ง","น้านิด","ยายมล","เจ๊โอ๋","ป้าตุ๊ก","ครัวคุณต๋อย","บ้านสวน"];
+  var PREFIX  = ["ครัว","ร้าน","โภชนา","เรือนไทย","ครัวคุณ","ก๋วยเตี๋ยวเรือ"];
 
   function rnd(a, b){ return a + Math.random() * (b - a); }
-  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
   function distKm(a, b){
     var R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
     var s = Math.sin(dLat/2)*Math.sin(dLat/2) +
             Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
     return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
   }
+  function offset(loc, km, bearing){
+    var dLat = (km / 111) * Math.cos(bearing);
+    var dLng = (km / (111 * Math.cos(loc.lat * Math.PI / 180))) * Math.sin(bearing);
+    return {lat: loc.lat + dLat, lng: loc.lng + dLng};
+  }
 
-  var shuffled = CITIES.slice().sort(function(){ return Math.random() - 0.5; });
-  var BRANCHES = shuffled.slice(0, 16).map(function(c, k){
-    var lat = c.lat + rnd(-0.02, 0.02), lng = c.lng + rnd(-0.02, 0.02);
-    var closed = Math.random() < 0.12;
-    var km = distKm(HOME, {lat:lat, lng:lng});
+  function makeShop(lat, lng, brand, k){
+    var closed = Math.random() < 0.14;
+    var name = brand
+      ? "อิ่มจัง · สาขา" + pick(["ตลาดสด","หน้าปั๊ม","ริมคลอง","ชุมชน","ตรงข้ามโรงเรียน","หัวมุม","ในซอย","ตลาดนัด"])
+      : (Math.random() < 0.5 ? pick(PREFIX) + pick(OWNERS) : pick(DISHES) + " " + pick(OWNERS));
     return {
-      n: "สาขา" + c.n,
-      a: (10 + Math.floor(Math.random()*280)) + " " + pick(ROADS) + " อ.เมือง จ." + c.prov,
-      dist: km,
-      d: (km < 10 ? km.toFixed(1) : Math.round(km)) + " กม.",
-      s: closed ? "ปิดแล้ว · เปิด 10:00 น." : "เปิดอยู่ · ปิด " + pick(CLOSES) + " น.",
-      closed: closed,
+      brand: !!brand, name: name,
+      a: (5 + Math.floor(Math.random()*300)) + " " + pick(ROADS),
       lat: lat, lng: lng,
+      rating: rnd(3.8, 5.0),
+      sold: Math.floor(rnd(40, 3200)),
+      price: "฿".repeat(1 + Math.floor(Math.random()*3)),
+      closed: closed,
+      s: closed ? "ปิดแล้ว · เปิด 10:00 น." : "เปิดอยู่ · ปิด " + pick(CLOSES) + " น.",
       img: IMGS[k % IMGS.length]
     };
-  }).sort(function(a, b){ return a.dist - b.dist; });
+  }
+
+  /* สร้างร้าน: หนาแน่นรอบตัวเรา + กระจายทั่วประเทศ */
+  function buildShops(here){
+    var shops = [], k = 0, i;
+    for(i = 0; i < 130; i++){                       // รอบ ๆ ตำแหน่งเรา (รัศมี ~6 กม.)
+      var km = Math.sqrt(Math.random()) * 6;
+      var p = offset(here, km, Math.random() * Math.PI * 2);
+      shops.push(makeShop(p.lat, p.lng, Math.random() < 0.16, k++));
+    }
+    CITIES.forEach(function(c){                     // ทั่วประเทศ เมืองละ 4-6 ร้าน
+      var n = 4 + Math.floor(Math.random()*3);
+      for(var j = 0; j < n; j++){
+        shops.push(makeShop(c.lat + rnd(-0.05,0.05), c.lng + rnd(-0.05,0.05),
+                            Math.random() < 0.12, k++));
+      }
+    });
+    return shops;
+  }
 
   var mapBtn = document.getElementById("btnMap");
   var mapView = document.getElementById("mapView");
@@ -749,35 +781,21 @@
   var mapLocate = document.getElementById("mapLocate");
   var mapSearch = document.getElementById("mapSearch");
   var mapResults = document.getElementById("mapResults");
-  document.getElementById("branchCount").textContent = BRANCHES.length + " สาขา";
+  var branchCountEl = document.getElementById("branchCount");
+  var mapTitleEl = document.querySelector(".mapview__bar b");
+  if(mapTitleEl) mapTitleEl.textContent = "ร้านอาหารใกล้ฉัน";
 
   var PIN = '<svg viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg">'+
     '<path d="M18 45C6 28 3 22 3 16A15 15 0 0 1 33 16C33 22 30 28 18 45Z" fill="#15803d"/>'+
-    '<circle cx="18" cy="16" r="9.5" fill="#fff"/></svg>';
+    '<circle cx="18" cy="16" r="9.5" fill="#fff"/>'+
+    '<circle cx="18" cy="16" r="4.5" fill="#15803d"/></svg>';
   var NAV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8-8-2Z"/></svg>';
-
-  /* --- branch list --- */
-  var listHtml = "";
-  BRANCHES.forEach(function(b, i){
-    listHtml +=
-      '<article class="branch" data-i="'+i+'">'+
-        '<img src="'+b.img+'" alt="ร้านอิ่มจัง '+b.n+'">'+
-        '<div class="branch__info">'+
-          '<h3>อิ่มจัง · '+b.n+ (i === 0 ? '<span class="branch__badge">ใกล้ที่สุด</span>' : '') +'</h3>'+
-          '<div class="addr">'+b.a+'</div>'+
-          '<div class="branch__meta">'+
-            '<span class="dist">◉ ห่าง '+b.d+'</span>'+
-            '<span class="'+(b.closed ? "closed" : "open")+'">'+b.s+'</span>'+
-          '</div>'+
-        '</div>'+
-        '<a class="branch__nav" href="https://www.google.com/maps/search/?api=1&query='+b.lat+','+b.lng+'" target="_blank" rel="noopener" aria-label="นำทางไป '+b.n+'">'+NAV+'</a>'+
-      '</article>';
-  });
-  branchList.innerHTML = listHtml;
 
   /* --- Leaflet map (lazy init on first open) --- */
   var map = null, userMarker = null, searchMarker = null, tileLayer = null;
+  var shopCluster = null, SHOPS = [], USER = null, mapPopulated = false;
   var hasL = (typeof L !== "undefined");
+  var hasCluster = hasL && typeof L.markerClusterGroup === "function";
 
   var ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
   var BASEMAPS = [
@@ -799,11 +817,13 @@
     if(tileLayer.setZIndex) tileLayer.setZIndex(0);
   }
 
-  function branchIcon(n){
-    return L.divIcon({
-      className:"", html:'<div class="lpin">'+PIN+'<span class="num">'+n+'</span></div>',
-      iconSize:[36,46], iconAnchor:[18,46], popupAnchor:[0,-42]
-    });
+  function brandIcon(){
+    return L.divIcon({ className:"", html:'<div class="lpin lpin--brand">'+PIN+'</div>',
+      iconSize:[34,44], iconAnchor:[17,44], popupAnchor:[0,-40] });
+  }
+  function shopIcon(){
+    return L.divIcon({ className:"", html:'<div class="shop-dot"></div>',
+      iconSize:[14,14], iconAnchor:[7,7], popupAnchor:[0,-8] });
   }
   function dotIcon(cls, size){
     return L.divIcon({ className:"", html:'<div class="'+cls+'"></div>',
@@ -813,79 +833,119 @@
   function initMap(){
     if(map || !hasL) return;
     map = L.map("lmap", {zoomControl:false, attributionControl:true})
-      .setView([13.2, 101.0], 6); // เริ่มที่มุมกว้างทั่วประเทศไทย
+      .setView([13.7563, 100.5018], 12);
     L.control.zoom({position:"bottomright"}).addTo(map);
     setBasemap("light");
-
-    BRANCHES.forEach(function(b, i){
-      b.marker = L.marker([b.lat, b.lng], {icon:branchIcon(i+1)}).addTo(map);
-      b.marker.bindPopup(
-        '<b>อิ่มจัง · '+b.n+'</b><br>'+b.a+'<br>'+b.s+
-        '<br><a href="https://www.google.com/maps/search/?api=1&query='+b.lat+','+b.lng+'" target="_blank" rel="noopener">นำทางด้วย Google Maps</a>'
-      );
-      b.marker.on("click", function(){ selectBranch(i, false); });
-    });
-    var grp = L.featureGroup(BRANCHES.map(function(b){ return b.marker; }));
-    map.fitBounds(grp.getBounds().pad(0.35));
   }
 
-  function selectBranch(i, fly){
-    branchList.querySelectorAll(".branch").forEach(function(c, k){ c.classList.toggle("is-active", k === i); });
+  /* วางร้านทั้งหมดลงแผนที่ + สร้างรายการร้านใกล้เรา */
+  function populate(here){
+    USER = here;
+    SHOPS = buildShops(here);
+    SHOPS.forEach(function(sp){ sp.dist = distKm(here, sp); });
+
+    if(shopCluster) map.removeLayer(shopCluster);
+    shopCluster = hasCluster
+      ? L.markerClusterGroup({maxClusterRadius:48, showCoverageOnHover:false})
+      : L.layerGroup();
+
+    SHOPS.forEach(function(sp, i){
+      var m = L.marker([sp.lat, sp.lng], {icon: sp.brand ? brandIcon() : shopIcon()});
+      m.bindPopup(
+        '<b>'+ (sp.brand ? "อิ่มจัง · " : "") + sp.name +'</b><br>'+
+        sp.a+'<br>★ '+sp.rating.toFixed(1)+' · '+sp.price+' · '+sp.s+
+        '<br><a href="https://www.google.com/maps/search/?api=1&query='+sp.lat+','+sp.lng+'" target="_blank" rel="noopener">นำทางด้วย Google Maps</a>'
+      );
+      m.on("click", function(){ selectShop(i, false); });
+      sp.marker = m;
+      shopCluster.addLayer(m);
+    });
+    map.addLayer(shopCluster);
+
+    var near = SHOPS.map(function(sp, i){ return {sp:sp, i:i}; })
+                    .sort(function(a, b){ return a.sp.dist - b.sp.dist; })
+                    .slice(0, 40);
+    branchCountEl.textContent = SHOPS.length + " ร้าน";
+    renderList(near);
+    mapPopulated = true;
+  }
+
+  function fmtKm(km){ return km < 10 ? km.toFixed(1) + " กม." : Math.round(km) + " กม."; }
+
+  function renderList(near){
+    branchList.innerHTML = near.map(function(o, rank){
+      var sp = o.sp;
+      var badge = rank === 0 ? '<span class="branch__badge">ใกล้ที่สุด</span>'
+                : sp.brand ? '<span class="branch__badge">อิ่มจัง</span>' : '';
+      return '<article class="branch" data-i="'+o.i+'">'+
+        '<img src="'+sp.img+'" alt="'+sp.name+'">'+
+        '<div class="branch__info">'+
+          '<h3>'+ (sp.brand ? "อิ่มจัง · " : "") + sp.name + badge +'</h3>'+
+          '<div class="addr">'+sp.a+'</div>'+
+          '<div class="branch__meta">'+
+            '<span class="rate">★ '+sp.rating.toFixed(1)+'</span>'+
+            '<span class="dist">◉ '+fmtKm(sp.dist)+'</span>'+
+            '<span class="'+(sp.closed ? "closed" : "open")+'">'+sp.s+'</span>'+
+          '</div>'+
+        '</div>'+
+        '<a class="branch__nav" href="https://www.google.com/maps/search/?api=1&query='+sp.lat+','+sp.lng+'" target="_blank" rel="noopener" aria-label="นำทางไป '+sp.name+'">'+NAV+'</a>'+
+      '</article>';
+    }).join("");
+  }
+
+  function selectShop(i, fly){
+    var sp = SHOPS[i];
+    if(!sp) return;
+    branchList.querySelectorAll(".branch").forEach(function(c){
+      c.classList.toggle("is-active", +c.dataset.i === i);
+    });
     var card = branchList.querySelector('.branch[data-i="'+i+'"]');
     if(card) card.scrollIntoView({block:"nearest", behavior:"smooth"});
     if(map && fly){
-      map.flyTo([BRANCHES[i].lat, BRANCHES[i].lng], 15, {duration:0.6});
-      if(BRANCHES[i].marker) BRANCHES[i].marker.openPopup();
+      map.flyTo([sp.lat, sp.lng], 16, {duration:0.6});
+      setTimeout(function(){ if(sp.marker) sp.marker.openPopup(); }, 620);
     }
   }
   branchList.addEventListener("click", function(e){
     if(e.target.closest(".branch__nav")) return;
     var c = e.target.closest(".branch");
-    if(c) selectBranch(+c.dataset.i, true);
+    if(c) selectShop(+c.dataset.i, true);
   });
 
-  /* --- go to my location (real GPS, with random demo fallback) --- */
-  function dropUser(ll, label){
+  /* --- ตำแหน่งของเรา: GPS จริง ถ้าไม่ได้ใช้ตำแหน่งจำลองสุ่ม --- */
+  function markUser(loc, label){
+    var ll = [loc.lat, loc.lng];
     if(userMarker) userMarker.setLatLng(ll);
-    else userMarker = L.marker(ll, {icon:dotIcon("lme", 18), keyboard:false}).addTo(map);
-    userMarker.bindPopup(label).openPopup();
-    map.flyTo(ll, 16, {duration:0.8});
+    else userMarker = L.marker(ll, {icon:dotIcon("lme", 18), keyboard:false, zIndexOffset:1000}).addTo(map);
+    userMarker.bindPopup(label);
   }
-  function fakeLocation(){
-    // สุ่มตำแหน่งจำลองรอบ ๆ กรุงเทพฯ
-    var lat = 13.700 + Math.random() * 0.130;
-    var lng = 100.470 + Math.random() * 0.150;
-    dropUser([lat, lng], "ตำแหน่งจำลอง (เดโม)");
-    showToast("ใช้ตำแหน่งจำลองแบบสุ่ม");
+  function resolveLocation(cb){
+    var done = false;
+    function fake(){
+      if(done) return; done = true;
+      cb({lat: 13.700 + Math.random()*0.130, lng: 100.470 + Math.random()*0.150}, false);
+    }
+    var giveUp = setTimeout(fake, 7000);
+    if(!navigator.geolocation){ clearTimeout(giveUp); fake(); return; }
+    navigator.geolocation.getCurrentPosition(function(pos){
+      if(done) return; done = true; clearTimeout(giveUp);
+      cb({lat: pos.coords.latitude, lng: pos.coords.longitude}, true);
+    }, function(){ clearTimeout(giveUp); fake(); },
+    {enableHighAccuracy:true, timeout:6500, maximumAge:60000});
+  }
+  function goToMe(loc, real){
+    markUser(loc, real ? "คุณอยู่ที่นี่" : "ตำแหน่งจำลอง (เดโม)");
+    populate(loc);
+    map.setView([loc.lat, loc.lng], 14, {animate:true});
+    if(!real) showToast("ใช้ตำแหน่งจำลองแบบสุ่ม");
   }
   mapLocate.addEventListener("click", function(){
     if(!map) return;
     mapLocate.classList.add("loading");
-    var done = false;
-    var giveUp = setTimeout(function(){
-      if(done) return;
-      done = true;
+    resolveLocation(function(loc, real){
       mapLocate.classList.remove("loading");
-      fakeLocation();
-    }, 7000);
-
-    if(!navigator.geolocation){
-      clearTimeout(giveUp); done = true;
-      mapLocate.classList.remove("loading");
-      fakeLocation();
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(function(pos){
-      if(done) return;
-      done = true; clearTimeout(giveUp);
-      mapLocate.classList.remove("loading");
-      dropUser([pos.coords.latitude, pos.coords.longitude], "คุณอยู่ที่นี่");
-    }, function(){
-      if(done) return;
-      done = true; clearTimeout(giveUp);
-      mapLocate.classList.remove("loading");
-      fakeLocation();
-    }, {enableHighAccuracy:true, timeout:6500, maximumAge:60000});
+      goToMe(loc, real);
+    });
   });
 
   /* --- search places nationwide (Nominatim / OpenStreetMap) --- */
@@ -932,7 +992,13 @@
     document.body.style.overflow = "hidden";
     mapView.classList.remove("ready");
     initMap();
-    var wait = reduce ? 350 : 1400;
+    if(!mapPopulated){
+      resolveLocation(function(loc, real){
+        if(map) map.invalidateSize();
+        goToMe(loc, real);
+      });
+    }
+    var wait = reduce ? 350 : 1600;
     setTimeout(function(){
       mapView.classList.add("ready");
       if(map) map.invalidateSize();
