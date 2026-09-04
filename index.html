@@ -757,18 +757,23 @@
     };
   }
 
-  /* สร้างร้าน: หนาแน่นรอบตัวเรา + กระจายทั่วประเทศ */
+  /* สร้างร้าน: หนาแน่นมากรอบตัวเรา + กระจายทั่วประเทศ */
   function buildShops(here){
-    var shops = [], k = 0, i;
-    for(i = 0; i < 130; i++){                       // รอบ ๆ ตำแหน่งเรา (รัศมี ~6 กม.)
-      var km = Math.sqrt(Math.random()) * 6;
+    var shops = [], k = 0, i, j;
+    for(i = 0; i < 480; i++){                       // รอบ ๆ ตำแหน่งเรา (แน่นตรงกลาง รัศมี ~9 กม.)
+      var km = Math.pow(Math.random(), 0.7) * 9;
       var p = offset(here, km, Math.random() * Math.PI * 2);
-      shops.push(makeShop(p.lat, p.lng, Math.random() < 0.16, k++));
+      shops.push(makeShop(p.lat, p.lng, Math.random() < 0.15, k++));
     }
-    CITIES.forEach(function(c){                     // ทั่วประเทศ เมืองละ 4-6 ร้าน
-      var n = 4 + Math.floor(Math.random()*3);
-      for(var j = 0; j < n; j++){
-        shops.push(makeShop(c.lat + rnd(-0.05,0.05), c.lng + rnd(-0.05,0.05),
+    for(i = 0; i < 120; i++){                       // วงกว้างขึ้นอีกหน่อย (~9-22 กม.)
+      var km2 = 9 + Math.random() * 13;
+      var p2 = offset(here, km2, Math.random() * Math.PI * 2);
+      shops.push(makeShop(p2.lat, p2.lng, Math.random() < 0.12, k++));
+    }
+    CITIES.forEach(function(c){                     // ทั่วประเทศ เมืองละ 5-8 ร้าน
+      var n = 5 + Math.floor(Math.random()*4);
+      for(j = 0; j < n; j++){
+        shops.push(makeShop(c.lat + rnd(-0.06,0.06), c.lng + rnd(-0.06,0.06),
                             Math.random() < 0.12, k++));
       }
     });
@@ -864,7 +869,7 @@
 
     var near = SHOPS.map(function(sp, i){ return {sp:sp, i:i}; })
                     .sort(function(a, b){ return a.sp.dist - b.sp.dist; })
-                    .slice(0, 40);
+                    .slice(0, 60);
     branchCountEl.textContent = SHOPS.length + " ร้าน";
     renderList(near);
     mapPopulated = true;
@@ -936,7 +941,7 @@
   function goToMe(loc, real){
     markUser(loc, real ? "คุณอยู่ที่นี่" : "ตำแหน่งจำลอง (เดโม)");
     populate(loc);
-    map.setView([loc.lat, loc.lng], 14, {animate:true});
+    map.setView([loc.lat, loc.lng], 15, {animate:true});
     if(!real) showToast("ใช้ตำแหน่งจำลองแบบสุ่ม");
   }
   mapLocate.addEventListener("click", function(){
