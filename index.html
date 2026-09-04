@@ -795,9 +795,10 @@
     '<path d="M18 45C6 28 3 22 3 16A15 15 0 0 1 33 16C33 22 30 28 18 45Z" fill="#15803d"/>'+
     '<circle cx="18" cy="16" r="9.5" fill="#fff"/>'+
     '<circle cx="18" cy="16" r="4.5" fill="#15803d"/></svg>';
-  var PIN2 = '<svg viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">'+
-    '<path d="M15 39C5 24 2.5 19 2.5 13A12.5 12.5 0 0 1 27.5 13C27.5 19 25 24 15 39Z" fill="#22c55e"/>'+
-    '<circle cx="15" cy="13" r="7" fill="#fff"/></svg>';
+  var PIN_CLOSED = '<svg viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg">'+
+    '<path d="M18 45C6 28 3 22 3 16A15 15 0 0 1 33 16C33 22 30 28 18 45Z" fill="#9ca3af"/>'+
+    '<circle cx="18" cy="16" r="9.5" fill="#fff"/>'+
+    '<circle cx="18" cy="16" r="4.5" fill="#9ca3af"/></svg>';
   var NAV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8-8-2Z"/></svg>';
 
   /* --- Leaflet map (lazy init on first open) --- */
@@ -826,11 +827,10 @@
     if(tileLayer.setZIndex) tileLayer.setZIndex(0);
   }
 
-  function pinIcon(){
-    return L.divIcon({ className:"", html:'<div class="lpin lpin--brand">'+PIN+'</div>',
+  function pinIcon(closed){
+    return L.divIcon({ className:"", html:'<div class="lpin lpin--brand'+(closed ? " lpin--closed" : "")+'">'+(closed ? PIN_CLOSED : PIN)+'</div>',
       iconSize:[34,44], iconAnchor:[17,44], popupAnchor:[0,-40] });
   }
-  var brandIcon = pinIcon, shopIcon = pinIcon;
   function dotIcon(cls, size){
     return L.divIcon({ className:"", html:'<div class="'+cls+'"></div>',
       iconSize:[size,size], iconAnchor:[size/2,size/2] });
@@ -856,9 +856,10 @@
       : L.layerGroup();
 
     SHOPS.forEach(function(sp, i){
-      var m = L.marker([sp.lat, sp.lng], {icon: sp.brand ? brandIcon() : shopIcon()});
+      var m = L.marker([sp.lat, sp.lng], {icon: pinIcon(sp.closed), opacity: sp.closed ? 0.9 : 1});
       m.bindPopup(
         '<b>'+ (sp.brand ? "อิ่มจัง · " : "") + sp.name +'</b><br>'+
+        (sp.closed ? '<b style="color:#dc2626">● ร้านปิดอยู่</b><br>' : '') +
         sp.a+'<br>★ '+sp.rating.toFixed(1)+' · '+sp.price+' · '+sp.s+
         '<br><a href="https://www.google.com/maps/search/?api=1&query='+sp.lat+','+sp.lng+'" target="_blank" rel="noopener">นำทางด้วย Google Maps</a>'
       );
@@ -911,6 +912,7 @@
       map.flyTo([sp.lat, sp.lng], 16, {duration:0.6});
       setTimeout(function(){ if(sp.marker) sp.marker.openPopup(); }, 620);
     }
+    if(sp.closed) showToast("ร้านนี้ปิดอยู่ · เปิด 10:00 น.");
   }
   branchList.addEventListener("click", function(e){
     if(e.target.closest(".branch__nav")) return;
