@@ -253,6 +253,56 @@
   .toast.show{transform:translate(-50%,0);opacity:1}
   .toast svg{width:16px;height:16px;color:var(--green-500)}
 
+  /* ---------- Map sheet ---------- */
+  .map-sheet{position:fixed;inset:0;z-index:80}
+  .map-sheet[hidden]{display:none}
+  .map-sheet__scrim{position:absolute;inset:0;background:rgba(10,22,15,.55)}
+  .map-sheet__panel{
+    position:absolute;left:50%;bottom:0;
+    transform:translate(-50%,100%);
+    transition:transform .3s cubic-bezier(.22,1,.36,1);
+    width:100%;max-width:var(--shell);
+    background:var(--surface);border-radius:22px 22px 0 0;overflow:hidden;
+    display:flex;flex-direction:column;max-height:94dvh;
+    padding-bottom:var(--safe-b);
+  }
+  .map-sheet:not([hidden]) .map-sheet__panel{transform:translate(-50%,0)}
+  .map-sheet__head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 12px 12px 16px;border-bottom:1px solid var(--line);
+  }
+  .map-sheet__head b{font-size:16px;color:var(--green-700)}
+  .map-canvas{position:relative;background:#e9efe8;flex:0 0 auto}
+  .map-canvas svg{display:block;width:100%;height:auto;max-height:46dvh}
+  .map-ping{transform-origin:200px 120px;animation:ping 1.8s ease-out infinite}
+  @keyframes ping{0%{transform:scale(.5);opacity:.5}70%{transform:scale(2.6);opacity:0}100%{opacity:0}}
+  .map-badge{
+    position:absolute;left:12px;bottom:12px;
+    display:flex;align-items:center;gap:6px;
+    background:var(--surface);color:var(--ink);
+    font-size:12px;font-weight:700;padding:7px 12px;border-radius:99px;
+    box-shadow:0 4px 14px rgba(0,0,0,.16);
+  }
+  .map-badge svg{width:14px;height:14px;color:var(--green-600)}
+  .shop-row{display:flex;gap:12px;padding:14px 16px 8px}
+  .shop-row img{width:92px;height:92px;border-radius:14px;object-fit:cover;flex:0 0 auto}
+  .shop-info{min-width:0}
+  .shop-info h3{font-size:15px;font-weight:700}
+  .shop-info p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .shop-info .shop-open{color:var(--green-700);font-weight:700}
+  .shop-actions{display:flex;gap:10px;padding:8px 16px 18px}
+  .btn-primary{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--green-600);color:#fff;height:48px;border-radius:14px;
+    font-weight:700;font-size:15px;
+  }
+  .btn-primary svg{width:18px;height:18px}
+  .btn-primary:active{background:var(--green-700)}
+  .btn-ghost{
+    flex:0 0 auto;padding:0 18px;height:48px;border-radius:14px;
+    background:var(--green-50);color:var(--green-700);font-weight:700;
+  }
+
   /* ---------- Responsive: tablet & desktop ---------- */
   @media (min-width:700px){
     :root{--shell:768px}
@@ -290,8 +340,8 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="search" placeholder="ค้นหาเมนู ร้านอาหาร..." aria-label="ค้นหา">
     </form>
-    <button class="icon-btn" aria-label="ตัวเลือกเพิ่มเติม">
-      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+    <button class="icon-btn" id="btnMap" aria-label="ดูแผนที่ร้าน">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
     </button>
   </header>
 
@@ -365,6 +415,63 @@
 <div class="toast" id="toast" role="status" aria-live="polite">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
   <span id="toastMsg">เพิ่มลงตะกร้าแล้ว</span>
+</div>
+
+<!-- Map sheet -->
+<div class="map-sheet" id="mapSheet" role="dialog" aria-modal="true" aria-label="แผนที่ร้านอิ่มจัง" hidden>
+  <div class="map-sheet__scrim" data-close></div>
+  <div class="map-sheet__panel">
+    <div class="map-sheet__head">
+      <b>ร้านอิ่มจัง · สาขาสยาม</b>
+      <button class="icon-btn" data-close aria-label="ปิดแผนที่">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="map-canvas">
+      <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="แผนที่จำลองตำแหน่งร้าน">
+        <rect width="400" height="300" fill="#e9efe8"/>
+        <rect x="232" y="-10" width="120" height="150" fill="#cfe6d2"/>
+        <rect x="-10" y="196" width="180" height="130" fill="#d7e8f5"/>
+        <g stroke="#ffffff" stroke-width="14" stroke-linecap="square">
+          <path d="M-20 120 H420"/>
+          <path d="M-20 214 H420"/>
+          <path d="M96 -20 V320"/>
+          <path d="M300 -20 V320"/>
+        </g>
+        <g stroke="#f3c04b" stroke-width="6"><path d="M-20 120 H420"/></g>
+        <g stroke="#eef2ee" stroke-width="4" stroke-dasharray="10 12">
+          <path d="M200 -20 V320"/><path d="M-20 60 H420"/>
+        </g>
+        <circle class="map-ping" cx="200" cy="120" r="16" fill="#16a34a" opacity="0.25"/>
+        <g transform="translate(200 120)">
+          <path d="M0 22 C-16 2 -18 -6 -18 -12 A18 18 0 0 1 18 -12 C18 -6 16 2 0 22 Z" fill="#15803d"/>
+          <circle cx="0" cy="-12" r="7" fill="#fff"/>
+        </g>
+      </svg>
+      <span class="map-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        อยู่ห่างคุณ 1.2 กม.
+      </span>
+    </div>
+
+    <div class="shop-row">
+      <img src="assets/banner-1.png" alt="หน้าร้านอิ่มจัง สาขาสยาม">
+      <div class="shop-info">
+        <h3>ร้านอิ่มจัง · สาขาสยาม</h3>
+        <p>128 ถ.พระราม 1 แขวงปทุมวัน เขตปทุมวัน กรุงเทพฯ 10330</p>
+        <p class="shop-open">เปิดอยู่ · ปิด 21:00 น.</p>
+      </div>
+    </div>
+
+    <div class="shop-actions">
+      <a class="btn-primary" href="https://www.google.com/maps/search/?api=1&query=13.7466,100.5347" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8-8-2Z"/></svg>
+        นำทางด้วย Google Maps
+      </a>
+      <button class="btn-ghost" data-close>ปิด</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -526,6 +633,26 @@
       });
       b.classList.add("is-active"); b.setAttribute("aria-current","page");
     });
+  });
+
+  /* ---- Map sheet ---- */
+  var mapBtn = document.getElementById("btnMap");
+  var mapSheet = document.getElementById("mapSheet");
+  function openMap(){
+    mapSheet.hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+  function closeMap(){
+    mapSheet.hidden = true;
+    document.body.style.overflow = "";
+    mapBtn.focus();
+  }
+  mapBtn.addEventListener("click", openMap);
+  mapSheet.addEventListener("click", function(e){
+    if(e.target.closest("[data-close]")) closeMap();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && !mapSheet.hidden) closeMap();
   });
 })();
 </script>
