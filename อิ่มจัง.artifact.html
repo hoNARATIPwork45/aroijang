@@ -316,7 +316,8 @@
   .lpin svg{width:36px;height:46px;display:block}
   .lpin--brand{width:34px;height:44px}
   .lpin--brand svg{width:34px;height:44px}
-  .shop-dot{width:14px;height:14px;border-radius:50%;background:#f59e0b;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.4)}
+  .lpin--mini{width:30px;height:40px}
+  .lpin--mini svg{width:30px;height:40px}
   .lme{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)}
   #lmap .marker-cluster{background:rgba(21,128,61,.28)}
   #lmap .marker-cluster div{background:var(--green-600);color:#fff;font-weight:800}
@@ -788,6 +789,9 @@
     '<path d="M18 45C6 28 3 22 3 16A15 15 0 0 1 33 16C33 22 30 28 18 45Z" fill="#15803d"/>'+
     '<circle cx="18" cy="16" r="9.5" fill="#fff"/>'+
     '<circle cx="18" cy="16" r="4.5" fill="#15803d"/></svg>';
+  var PIN2 = '<svg viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">'+
+    '<path d="M15 39C5 24 2.5 19 2.5 13A12.5 12.5 0 0 1 27.5 13C27.5 19 25 24 15 39Z" fill="#22c55e"/>'+
+    '<circle cx="15" cy="13" r="7" fill="#fff"/></svg>';
   var NAV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8-8-2Z"/></svg>';
 
   /* --- Leaflet map (lazy init on first open) --- */
@@ -821,8 +825,8 @@
       iconSize:[34,44], iconAnchor:[17,44], popupAnchor:[0,-40] });
   }
   function shopIcon(){
-    return L.divIcon({ className:"", html:'<div class="shop-dot"></div>',
-      iconSize:[14,14], iconAnchor:[7,7], popupAnchor:[0,-8] });
+    return L.divIcon({ className:"", html:'<div class="lpin lpin--mini">'+PIN2+'</div>',
+      iconSize:[30,40], iconAnchor:[15,40], popupAnchor:[0,-36] });
   }
   function dotIcon(cls, size){
     return L.divIcon({ className:"", html:'<div class="'+cls+'"></div>',
