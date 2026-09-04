@@ -367,6 +367,9 @@
     margin-left:6px;vertical-align:middle;
   }
   .branch img{width:74px;height:74px;border-radius:12px;object-fit:cover;flex:0 0 auto}
+  .branch__art{width:74px;height:74px;border-radius:12px;overflow:hidden;flex:0 0 auto}
+  .branch__art svg{width:100%;height:100%;display:block}
+  .branch__art.is-closed{filter:grayscale(1);opacity:.65}
   .branch__info{flex:1;min-width:0}
   .branch__info h3{font-size:14px;font-weight:700}
   .branch__info .addr{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
@@ -390,13 +393,15 @@
     position:absolute;left:50%;bottom:0;
     transform:translate(-50%,100%);
     transition:transform .3s cubic-bezier(.22,1,.36,1);
-    width:100%;max-width:var(--shell);background:var(--surface);
+    width:100%;max-width:min(var(--shell), 520px);background:var(--surface);
     border-radius:22px 22px 0 0;overflow:hidden;max-height:90dvh;
     display:flex;flex-direction:column;
   }
   .shopsheet:not([hidden]) .shopsheet__panel{transform:translate(-50%,0)}
-  .shopsheet__hero{position:relative;flex:0 0 auto}
-  .shopsheet__hero img{width:100%;height:148px;object-fit:cover;display:block;background:var(--green-50)}
+  .shopsheet__hero{position:relative;flex:0 0 auto;height:150px;overflow:hidden;background:var(--green-50)}
+  .shopsheet__hero > div{position:absolute;inset:0}
+  .shopsheet__hero svg{width:100%;height:100%;display:block}
+  .shopsheet__hero.is-closed{filter:grayscale(1)}
   .shopsheet__close{
     position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;
     background:rgba(255,255,255,.94);display:grid;place-items:center;color:var(--ink);
@@ -578,7 +583,7 @@
   <div class="shopsheet__scrim" data-shopclose></div>
   <div class="shopsheet__panel">
     <div class="shopsheet__hero">
-      <img id="ssCover" src="" alt="">
+      <div id="ssCover" aria-hidden="true"></div>
       <button class="shopsheet__close" type="button" data-shopclose aria-label="ปิด">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
@@ -818,6 +823,35 @@
   var OPENS = ["08:00","09:00","10:00","11:00","16:00","17:00"];
   var CUISINES = ["อาหารตามสั่ง","ก๋วยเตี๋ยว/เส้น","อาหารอีสาน","ข้าวราดแกง","ปิ้งย่าง/หมูกระทะ","ของหวาน/เครื่องดื่ม","อาหารเช้า","อาหารทะเล"];
   var PREFIXES = ["081","082","086","089","091","095","062","064"];
+  var ART = {
+    "อาหารตามสั่ง":["#fff7e0","#fcd34d","#f59e0b"],
+    "ก๋วยเตี๋ยว/เส้น":["#ffefef","#fca5a5","#ef4444"],
+    "อาหารอีสาน":["#f2fbe3","#bef264","#84cc16"],
+    "ข้าวราดแกง":["#fff1e3","#fdba74","#f97316"],
+    "ปิ้งย่าง/หมูกระทะ":["#fdeef5","#f9a8d4","#ec4899"],
+    "ของหวาน/เครื่องดื่ม":["#f7efff","#d8b4fe","#a855f7"],
+    "อาหารเช้า":["#eaf6ff","#93c5fd","#3b82f6"],
+    "อาหารทะเล":["#e6fbfd","#67e8f9","#06b6d4"]
+  };
+  function shopArt(sp){
+    var c = ART[sp.cuisine] || ["#e9f7ee","#86efac","#22c55e"];
+    var id = "g" + Math.floor(Math.random() * 1e6);
+    return '<svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">'+
+      '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0" stop-color="'+c[0]+'"/><stop offset="1" stop-color="'+c[1]+'"/>'+
+      '</linearGradient></defs>'+
+      '<rect width="200" height="120" fill="url(#'+id+')"/>'+
+      '<circle cx="34" cy="24" r="26" fill="#fff" opacity=".25"/>'+
+      '<circle cx="176" cy="104" r="34" fill="#fff" opacity=".18"/>'+
+      '<g stroke="'+c[2]+'" stroke-width="3" stroke-linecap="round" fill="none" opacity=".75">'+
+        '<path d="M86 34c-5 6 5 10 0 16"/><path d="M100 30c-5 7 5 11 0 18"/><path d="M114 34c-5 6 5 10 0 16"/>'+
+      '</g>'+
+      '<path d="M60 68h80a40 40 0 0 1-80 0Z" fill="#fff"/>'+
+      '<path d="M60 68h80a40 40 0 0 1-80 0Z" fill="none" stroke="'+c[2]+'" stroke-width="3.5"/>'+
+      '<path d="M68 76h64a32 32 0 0 1-64 0Z" fill="'+c[2]+'" opacity=".55"/>'+
+      '<rect x="52" y="64" width="96" height="6" rx="3" fill="'+c[2]+'"/>'+
+      '</svg>';
+  }
   function makePhone(){
     var p = pick(PREFIXES), rest = String(Math.floor(rnd(1000000, 9999999)));
     return p + "-" + rest.slice(0,3) + "-" + rest.slice(3);
@@ -963,7 +997,7 @@
       var badge = rank === 0 ? '<span class="branch__badge">ใกล้ที่สุด</span>'
                 : sp.brand ? '<span class="branch__badge">อิ่มจัง</span>' : '';
       return '<article class="branch" data-i="'+o.i+'">'+
-        '<img src="'+sp.img+'" alt="'+sp.name+'">'+
+        '<div class="branch__art'+(sp.closed ? " is-closed" : "")+'" aria-hidden="true">'+shopArt(sp)+'</div>'+
         '<div class="branch__info">'+
           '<h3>'+ (sp.brand ? "อิ่มจัง · " : "") + sp.name + badge +'</h3>'+
           '<div class="addr">'+sp.a+'</div>'+
@@ -1012,8 +1046,8 @@
     var sp = SHOPS[i];
     if(!sp) return;
     var tel = sp.phone.replace(/-/g, "");
-    document.getElementById("ssCover").src = sp.img;
-    document.getElementById("ssCover").alt = sp.name;
+    document.getElementById("ssCover").innerHTML = shopArt(sp);
+    document.querySelector(".shopsheet__hero").classList.toggle("is-closed", !!sp.closed);
     document.getElementById("ssName").textContent = (sp.brand ? "อิ่มจัง · " : "") + sp.name;
     var st = document.getElementById("ssStatus");
     st.textContent = sp.closed ? "ปิดอยู่" : "เปิดอยู่";
