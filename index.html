@@ -431,6 +431,29 @@
   }
   .panel__foot[hidden]{display:none}
 
+  .panel--full .panel__box{
+    top:0;height:100dvh;max-height:100dvh;border-radius:0;
+  }
+  .panel--full .panel__head{
+    padding-top:calc(14px + env(safe-area-inset-top,0px));
+  }
+  .acct-hero{
+    display:flex;align-items:center;gap:14px;padding:6px 0 16px;
+  }
+  .acct-stats{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px;
+  }
+  .acct-stat{
+    background:var(--green-50);border-radius:16px;padding:14px 8px;text-align:center;
+  }
+  .acct-stat b{display:block;font-size:19px;color:var(--green-700)}
+  .acct-stat span{display:block;font-size:11.5px;color:var(--muted);font-weight:700;margin-top:2px}
+  .acct-sect{font-size:12px;font-weight:800;color:var(--muted);margin:18px 0 2px;letter-spacing:.4px}
+  .btn-logout{
+    display:block;width:100%;height:48px;border-radius:14px;margin-top:22px;
+    background:#fee2e2;color:var(--danger);font-size:14px;font-weight:800;
+  }
+  .btn-logout:active{background:#fecaca}
   .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .cat-tile{
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
@@ -976,9 +999,10 @@
     salad:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18a9 9 0 0 1-18 0Z"/><path d="M8 12a4 4 0 0 1 8 0"/><path d="M12 4v4"/></svg>'
   };
 
-  function openPanel(view, title){
+  function openPanel(view, title, full){
     panelView = view;
     panelTitle.textContent = title;
+    panel.classList.toggle("panel--full", !!full);
     panel.hidden = false;
     document.body.style.overflow = "hidden";
     drawPanel();
@@ -1092,28 +1116,57 @@
     }).join("");
   }
 
-  /* --- บัญชี --- */
+  /* --- บัญชี (เต็มหน้าจอ) --- */
+  var ACCT_ICON = {
+    addr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+    hist:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+    coup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 3 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.6Z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>',
+    pay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>',
+    bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10.5 20a2 2 0 0 0 3 0"/></svg>',
+    help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.1-2.4 3.8"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>',
+    star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.4 5.2 5.6.7-4.1 3.9 1.1 5.7L12 15.8 6.9 18.5 8 12.8 3.9 8.9l5.6-.7L12 3Z"/></svg>'
+  };
   function drawAccount(){
     panelFoot.hidden = true;
-    var rows = [
-      ["ที่อยู่จัดส่ง", "128 ถ.พระราม 1 ปทุมวัน กรุงเทพฯ"],
-      ["ประวัติการสั่งซื้อ", "24 ออเดอร์"],
-      ["คูปองส่วนลด", "3 ใบพร้อมใช้"],
-      ["การชำระเงิน", "พร้อมเพย์ · บัตรเครดิต"],
-      ["ตั้งค่าการแจ้งเตือน", ""],
-      ["ช่วยเหลือ / ติดต่อเรา", ""]
+    var groups = [
+      ["บัญชีและการสั่งซื้อ", [
+        ["addr", "ที่อยู่จัดส่ง", "128 ถ.พระราม 1 ปทุมวัน กรุงเทพฯ"],
+        ["hist", "ประวัติการสั่งซื้อ", "24 ออเดอร์"],
+        ["pay",  "วิธีการชำระเงิน", "พร้อมเพย์ · บัตรเครดิต"]
+      ]],
+      ["สิทธิพิเศษ", [
+        ["coup", "คูปองส่วนลด", "3 ใบพร้อมใช้"],
+        ["star", "แต้มสะสมอิ่มจัง", "1,240 แต้ม"]
+      ]],
+      ["ตั้งค่า", [
+        ["bell", "การแจ้งเตือน", "เปิดอยู่"],
+        ["help", "ช่วยเหลือ / ติดต่อเรา", ""]
+      ]]
     ];
     panelBody.innerHTML =
-      '<div class="acct">'+
+      '<div class="acct-hero">'+
         '<div class="acct__ava"><img src="assets/logo.png" alt=""></div>'+
-        '<div class="acct__who"><b>คุณนราธิป</b><span>สมาชิกอิ่มจัง · แต้มสะสม 1,240</span></div>'+
+        '<div class="acct__who"><b>คุณนราธิป</b><span>สมาชิกอิ่มจัง · naratipjang.45@gmail.com</span></div>'+
       '</div>'+
-      rows.map(function(r){
-        return '<div class="acct-row">'+SVG.pinRow+
-          '<div><div>'+r[0]+'</div>'+
-          (r[1] ? '<div style="font-size:12px;color:var(--muted);font-weight:600">'+r[1]+'</div>' : "")+
-          '</div>'+SVG.chev+'</div>';
-      }).join("");
+      '<div class="acct-stats">'+
+        '<div class="acct-stat"><b>24</b><span>ออเดอร์</span></div>'+
+        '<div class="acct-stat"><b>1,240</b><span>แต้มสะสม</span></div>'+
+        '<div class="acct-stat"><b>3</b><span>คูปอง</span></div>'+
+      '</div>'+
+      groups.map(function(g){
+        return '<div class="acct-sect">'+g[0]+'</div>' +
+          g[1].map(function(r){
+            return '<div class="acct-row">'+ACCT_ICON[r[0]]+
+              '<div><div>'+r[1]+'</div>'+
+              (r[2] ? '<div style="font-size:12px;color:var(--muted);font-weight:600">'+r[2]+'</div>' : "")+
+              '</div>'+SVG.chev+'</div>';
+          }).join("");
+      }).join("")+
+      '<button class="btn-logout" type="button" id="logout">ออกจากระบบ</button>';
+    document.getElementById("logout").addEventListener("click", function(){
+      closePanel(); setNav(0);
+      showToast("ออกจากระบบแล้ว");
+    });
   }
 
   /* ---- Bottom nav ---- */
@@ -1129,7 +1182,7 @@
     function(){ openPanel("cat",  "หมวดหมู่"); },
     function(){ openPanel("cart", "ตะกร้าของฉัน"); },
     function(){ openPanel("fav",  "รายการโปรด"); },
-    function(){ openPanel("acct", "บัญชีของฉัน"); }
+    function(){ openPanel("acct", "บัญชีของฉัน", true); }
   ];
   navBtns.forEach(function(b, k){
     b.addEventListener("click", function(){
