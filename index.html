@@ -406,6 +406,92 @@
   .branch__nav svg{width:20px;height:20px}
   .branch__nav:active{background:var(--green-700)}
 
+
+  /* ---------- Generic bottom panel (หมวดหมู่ / ตะกร้า / โปรด / บัญชี) ---------- */
+  .panel{position:fixed;inset:0;z-index:2400}
+  .panel[hidden]{display:none}
+  .panel__scrim{position:absolute;inset:0;background:rgba(10,22,15,.55)}
+  .panel__box{
+    position:absolute;left:50%;bottom:0;transform:translate(-50%,100%);
+    transition:transform .3s cubic-bezier(.22,1,.36,1);
+    width:100%;max-width:min(var(--shell), 520px);background:var(--surface);
+    border-radius:22px 22px 0 0;overflow:hidden;max-height:86dvh;
+    display:flex;flex-direction:column;
+  }
+  .panel:not([hidden]) .panel__box{transform:translate(-50%,0)}
+  .panel__head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:14px 12px 14px 18px;border-bottom:1px solid var(--line);flex:0 0 auto;
+  }
+  .panel__head b{font-size:17px;color:var(--ink)}
+  .panel__body{padding:12px 16px;overflow-y:auto;flex:1 1 auto;-webkit-overflow-scrolling:touch}
+  .panel__foot{
+    flex:0 0 auto;border-top:1px solid var(--line);
+    padding:12px 16px calc(14px + var(--safe-b));background:var(--surface);
+  }
+  .panel__foot[hidden]{display:none}
+
+  .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .cat-tile{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    padding:14px 6px;border-radius:16px;background:var(--green-50);
+    color:var(--green-700);font-size:12.5px;font-weight:700;text-align:center;
+  }
+  .cat-tile svg{width:26px;height:26px}
+  .cat-tile.is-active{background:var(--green-600);color:#fff}
+  .cat-tile:active{transform:scale(.96)}
+
+  .line{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+  .line:last-child{border-bottom:none}
+  .line__art{width:60px;height:60px;border-radius:12px;overflow:hidden;flex:0 0 auto;background:var(--green-50)}
+  .line__art svg{width:100%;height:100%;display:block}
+  .line__info{flex:1;min-width:0}
+  .line__info h4{font-size:14px;font-weight:700;line-height:1.35}
+  .line__info .p{font-size:13px;font-weight:800;color:var(--green-700);margin-top:3px}
+  .qty{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+  .qty button{
+    width:32px;height:32px;border-radius:10px;background:var(--green-50);color:var(--green-700);
+    display:grid;place-items:center;font-weight:800;
+  }
+  .qty button svg{width:15px;height:15px}
+  .qty button:active{background:var(--green-100)}
+  .qty .n{min-width:22px;text-align:center;font-weight:800;font-size:14px}
+  .icon-only{
+    width:38px;height:38px;border-radius:12px;background:var(--green-600);color:#fff;
+    display:grid;place-items:center;flex:0 0 auto;
+  }
+  .icon-only svg{width:18px;height:18px}
+  .icon-only.ghost{background:var(--bg);color:var(--danger)}
+
+  .sum{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--muted);font-weight:600}
+  .sum.total{font-size:16px;color:var(--ink);font-weight:800;padding-top:8px;margin-top:4px;border-top:1px solid var(--line)}
+  .btn-wide{
+    display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;
+    border-radius:14px;background:var(--green-600);color:#fff;font-size:15px;font-weight:800;margin-top:10px;
+  }
+  .btn-wide svg{width:19px;height:19px;flex:0 0 auto}
+  .btn-wide{white-space:nowrap}
+  .btn-wide:active{background:var(--green-700)}
+  .btn-wide[disabled]{background:var(--line);color:var(--muted)}
+
+  .empty{text-align:center;padding:30px 10px}
+  .empty img{width:120px;margin:0 auto 10px}
+  .empty b{display:block;font-size:15px;color:var(--green-700)}
+  .empty span{display:block;font-size:13px;color:var(--muted);margin-top:4px}
+
+  .acct{display:flex;align-items:center;gap:14px;padding:4px 0 16px}
+  .acct__ava{width:58px;height:58px;border-radius:50%;background:var(--green-50);display:grid;place-items:center;flex:0 0 auto}
+  .acct__ava img{width:48px;height:48px;object-fit:contain}
+  .acct__who b{display:block;font-size:16px}
+  .acct__who span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+  .acct-row{
+    display:flex;align-items:center;gap:12px;padding:14px 2px;border-top:1px solid var(--line);
+    font-size:14px;font-weight:600;
+  }
+  .acct-row svg:first-child{width:19px;height:19px;color:var(--green-600);flex:0 0 auto}
+  .acct-row .chev{margin-left:auto;width:16px;height:16px;color:var(--muted)}
+  .acct-row:active{background:var(--green-50)}
+
   /* ---------- Shop detail sheet ---------- */
   .shopsheet{position:fixed;inset:0;z-index:2500}
   .shopsheet[hidden]{display:none}
@@ -606,6 +692,21 @@
   <div class="mapview__list" id="branchList"></div>
 </div>
 
+<!-- Generic panel -->
+<div class="panel" id="panel" role="dialog" aria-modal="true" hidden>
+  <div class="panel__scrim" data-panelclose></div>
+  <div class="panel__box">
+    <header class="panel__head">
+      <b id="panelTitle"></b>
+      <button class="icon-btn" type="button" data-panelclose aria-label="ปิด">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div class="panel__body" id="panelBody"></div>
+    <div class="panel__foot" id="panelFoot" hidden></div>
+  </div>
+</div>
+
 <!-- Shop detail sheet -->
 <div class="shopsheet" id="shopSheet" role="dialog" aria-modal="true" aria-label="ข้อมูลร้าน" hidden>
   <div class="shopsheet__scrim" data-shopclose></div>
@@ -676,52 +777,23 @@
     {n:"ข้าวไข่ข้นกุ้ง",         c:"rice",   p:79, r:4.9, s:1010, tag:"ขายดี"}
   ];
 
+  /* ---- state ---- */
+  var CART = {};        // index -> qty
+  var FAVS = {};        // index -> true
+  var curFilter = "all";
+
+  var FILTERS = {
+    all:    {label:"ทั้งหมด",   test:function(){ return true; }},
+    hot:    {label:"ยอดนิยม",   test:function(it){ return it.tag === "ขายดี" || it.r >= 4.8; }},
+    fresh:  {label:"เมนูใหม่",  test:function(it){ return it.tag === "ใหม่"; }},
+    promo:  {label:"โปรโมชั่น", test:function(it){ return it.p <= 65; }},
+    rice:   {label:"ตามสั่ง",   test:function(it){ return it.c === "rice"; }},
+    noodle: {label:"เส้น",      test:function(it){ return it.c === "noodle"; }},
+    salad:  {label:"ยำ/สลัด",   test:function(it){ return it.c === "salad"; }}
+  };
+
   var grid = document.getElementById("grid");
-  var html = "";
-  ITEMS.forEach(function(it, i){
-    var badge = it.tag === "ใหม่" ? '<span class="badge new">ใหม่</span>'
-              : it.tag === "ขายดี" ? '<span class="badge">ขายดี</span>' : "";
-    html +=
-      '<article class="card">'+
-        '<div class="card-media">'+ dish(it.c) + badge +
-          '<button class="fav" aria-label="เพิ่ม '+it.n+' ในรายการโปรด" data-fav>'+
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6C19 16.5 12 21 12 21z"/></svg>'+
-          '</button>'+
-        '</div>'+
-        '<div class="card-body">'+
-          '<div class="card-title">'+it.n+'</div>'+
-          '<div class="rating">'+
-            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>'+
-            it.r.toFixed(1)+' · ขายแล้ว '+it.s.toLocaleString("th-TH")+
-          '</div>'+
-          '<div class="price-row">'+
-            '<div class="price">฿'+it.p+' <small>/ จาน</small></div>'+
-            '<button class="add" aria-label="เพิ่ม '+it.n+' ลงตะกร้า" data-add data-name="'+it.n+'">'+
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'+
-            '</button>'+
-          '</div>'+
-        '</div>'+
-      '</article>';
-
-    if(i === 6){
-      html +=
-        '<div class="sticker-tile" aria-hidden="true">'+
-          '<img src="assets/mascot-angry.png" alt="">'+
-        '</div>'+
-        '<div class="ad-card">'+
-          '<img class="ad-logo" src="assets/logo.png" alt="">'+
-          '<div>'+
-            '<div class="lbl">โฆษณา · ADS</div>'+
-            '<div class="txt">ลงโฆษณาร้านของคุณกับอร่อยจัง</div>'+
-            '<div class="sub">เข้าถึงลูกค้าหิวโซใกล้ร้านคุณทันที</div>'+
-          '</div>'+
-        '</div>';
-    }
-  });
-  grid.innerHTML = html;
-
-  /* ---- Cart ---- */
-  var count = 0;
+  var chips = document.getElementById("chips");
   var cc = document.getElementById("cartCount");
   var toast = document.getElementById("toast");
   var toastMsg = document.getElementById("toastMsg");
@@ -734,29 +806,114 @@
     tHide = setTimeout(function(){ toast.classList.remove("show"); }, 2200);
   }
 
-  grid.addEventListener("click", function(e){
-    var add = e.target.closest("[data-add]");
-    if(add){
-      count++;
-      cc.textContent = count;
-      cc.classList.add("show");
-      cc.style.animation = "none"; cc.offsetWidth; cc.style.animation = "";
-      showToast("เพิ่ม “"+add.dataset.name+"” ลงตะกร้าแล้ว");
+  function cartQty(){
+    var n = 0; for(var k in CART) n += CART[k]; return n;
+  }
+  function cartTotal(){
+    var s = 0; for(var k in CART) s += CART[k] * ITEMS[k].p; return s;
+  }
+  function syncCartBadge(){
+    var n = cartQty();
+    cc.textContent = n;
+    cc.classList.toggle("show", n > 0);
+  }
+  function addToCart(i, silent){
+    CART[i] = (CART[i] || 0) + 1;
+    syncCartBadge();
+    if(!silent){
+      showToast("เพิ่ม “"+ITEMS[i].n+"” ลงตะกร้าแล้ว");
       if(navigator.vibrate) navigator.vibrate(12);
-      return;
     }
+  }
+  function setQty(i, q){
+    if(q <= 0) delete CART[i]; else CART[i] = q;
+    syncCartBadge();
+  }
+
+  /* ---- menu grid ---- */
+  function renderGrid(){
+    var f = FILTERS[curFilter] || FILTERS.all;
+    var html = "", shown = 0;
+    ITEMS.forEach(function(it, i){
+      if(!f.test(it)) return;
+      shown++;
+      var badge = it.tag === "ใหม่" ? '<span class="badge new">ใหม่</span>'
+                : it.tag === "ขายดี" ? '<span class="badge">ขายดี</span>' : "";
+      html +=
+        '<article class="card" data-i="'+i+'">'+
+          '<div class="card-media">'+ dish(it.c) + badge +
+            '<button class="fav'+(FAVS[i] ? " is-on" : "")+'" aria-label="เพิ่ม '+it.n+' ในรายการโปรด" data-fav>'+
+              '<svg viewBox="0 0 24 24" fill="'+(FAVS[i] ? "currentColor" : "none")+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6C19 16.5 12 21 12 21z"/></svg>'+
+            '</button>'+
+          '</div>'+
+          '<div class="card-body">'+
+            '<div class="card-title">'+it.n+'</div>'+
+            '<div class="rating">'+
+              '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>'+
+              it.r.toFixed(1)+' · ขายแล้ว '+it.s.toLocaleString("th-TH")+
+            '</div>'+
+            '<div class="price-row">'+
+              '<div class="price">฿'+it.p+' <small>/ จาน</small></div>'+
+              '<button class="add" aria-label="เพิ่ม '+it.n+' ลงตะกร้า" data-add>'+
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'+
+              '</button>'+
+            '</div>'+
+          '</div>'+
+        '</article>';
+
+      if(shown === 7){
+        html +=
+          '<div class="sticker-tile" aria-hidden="true">'+
+            '<img src="assets/mascot-angry.png" alt="">'+
+          '</div>'+
+          '<div class="ad-card">'+
+            '<img class="ad-logo" src="assets/logo.png" alt="">'+
+            '<div>'+
+              '<div class="lbl">โฆษณา · ADS</div>'+
+              '<div class="txt">ลงโฆษณาร้านของคุณกับอร่อยจัง</div>'+
+              '<div class="sub">เข้าถึงลูกค้าหิวโซใกล้ร้านคุณทันที</div>'+
+            '</div>'+
+          '</div>';
+      }
+    });
+    if(!shown){
+      html = '<div class="ad-card" style="justify-content:center">ไม่มีเมนูในหมวดนี้</div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  grid.addEventListener("click", function(e){
+    var card = e.target.closest(".card");
+    if(!card) return;
+    var i = +card.dataset.i;
+    if(e.target.closest("[data-add]")){ addToCart(i); return; }
     var fav = e.target.closest("[data-fav]");
-    if(fav){ fav.classList.toggle("is-on"); }
+    if(fav){
+      if(FAVS[i]) delete FAVS[i]; else FAVS[i] = true;
+      fav.classList.toggle("is-on", !!FAVS[i]);
+      fav.querySelector("svg").setAttribute("fill", FAVS[i] ? "currentColor" : "none");
+      showToast(FAVS[i] ? "เพิ่มใน “รายการโปรด” แล้ว" : "เอาออกจากรายการโปรดแล้ว");
+    }
   });
 
   /* ---- Filter chips ---- */
-  var chips = document.getElementById("chips");
+  function setFilter(id){
+    curFilter = FILTERS[id] ? id : "all";
+    chips.querySelectorAll(".chip").forEach(function(c){
+      c.classList.toggle("is-active", c.dataset.f === curFilter);
+    });
+    renderGrid();
+  }
+  chips.innerHTML = Object.keys(FILTERS).map(function(id){
+    return '<button class="chip'+(id === "all" ? " is-active" : "")+'" data-f="'+id+'">'+FILTERS[id].label+'</button>';
+  }).join("");
   chips.addEventListener("click", function(e){
     var chip = e.target.closest(".chip");
-    if(!chip) return;
-    chips.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("is-active"); });
-    chip.classList.add("is-active");
+    if(chip) setFilter(chip.dataset.f);
   });
+
+  renderGrid();
+  syncCartBadge();
 
   /* ---- Banner carousel ---- */
   var track = document.getElementById("bannerTrack");
@@ -794,13 +951,190 @@
   track.addEventListener("touchend", function(){ stop(); auto(); }, {passive:true});
   auto();
 
-  /* ---- Bottom nav active state ---- */
-  document.querySelectorAll(".bottomnav .navitem").forEach(function(b){
+  /* ---- Bottom panel (หมวดหมู่ / ตะกร้า / รายการโปรด / บัญชี) ---- */
+  var panel      = document.getElementById("panel");
+  var panelTitle = document.getElementById("panelTitle");
+  var panelBody  = document.getElementById("panelBody");
+  var panelFoot  = document.getElementById("panelFoot");
+  var panelView  = null;
+
+  var SVG = {
+    plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>',
+    cart:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.4 12.4a1.5 1.5 0 0 0 1.5 1.2h8.7a1.5 1.5 0 0 0 1.5-1.2L22 7H6"/></svg>',
+    pinRow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+    chev:  '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>'
+  };
+  var CAT_ICON = {
+    all:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    hot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4 0 7-2.8 7-6.6 0-4.6-4.4-6.2-3.5-11.4-2.6.6-4.2 2.6-4.2 4.6 0 1.6-1.2 2.2-2 1.4-.6-.6-.8-1.6-.8-2.4C6.6 9 5 11.4 5 15.4 5 19.2 8 22 12 22Z"/></svg>',
+    fresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.4 5.2 5.6.7-4.1 3.9 1.1 5.7L12 15.8 6.9 18.5 8 12.8 3.9 8.9l5.6-.7L12 3Z"/></svg>',
+    promo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 3 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.6Z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>',
+    rice:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 16 0Z"/><path d="M3 17h18"/><path d="M12 5V3"/></svg>',
+    noodle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16a8 8 0 0 1-16 0Z"/><path d="M8 8c0-2 1-3 2-4M12 8c0-2 1-3 2-4M16 8c0-2 1-3 2-4"/></svg>',
+    salad:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18a9 9 0 0 1-18 0Z"/><path d="M8 12a4 4 0 0 1 8 0"/><path d="M12 4v4"/></svg>'
+  };
+
+  function openPanel(view, title){
+    panelView = view;
+    panelTitle.textContent = title;
+    panel.hidden = false;
+    document.body.style.overflow = "hidden";
+    drawPanel();
+  }
+  function closePanel(){
+    panel.hidden = true; panelView = null;
+    if(mapView.hidden) document.body.style.overflow = "";
+  }
+  panel.addEventListener("click", function(e){
+    if(e.target.closest("[data-panelclose]")){ closePanel(); setNav(0); }
+  });
+
+  function money(n){ return "\u0e3f" + n.toLocaleString("th-TH"); }
+  function lineArt(i){ return '<div class="line__art">'+dish(ITEMS[i].c)+'</div>'; }
+
+  function drawPanel(){
+    if(panelView === "cat")   return drawCategories();
+    if(panelView === "cart")  return drawCart();
+    if(panelView === "fav")   return drawFavs();
+    if(panelView === "acct")  return drawAccount();
+  }
+
+  /* --- หมวดหมู่ --- */
+  function drawCategories(){
+    panelFoot.hidden = true;
+    panelBody.innerHTML = '<div class="cat-grid">' + Object.keys(FILTERS).map(function(id){
+      var n = ITEMS.filter(FILTERS[id].test).length;
+      return '<button class="cat-tile'+(id === curFilter ? " is-active" : "")+'" data-cat="'+id+'">'+
+        (CAT_ICON[id] || CAT_ICON.all) + FILTERS[id].label +
+        '<span style="opacity:.75;font-weight:600">'+n+' เมนู</span></button>';
+    }).join("") + '</div>';
+  }
+
+  panelBody.addEventListener("click", function(e){
+    var cat = e.target.closest("[data-cat]");
+    if(cat){
+      setFilter(cat.dataset.cat);
+      closePanel(); setNav(0);
+      showToast("แสดงหมวด “"+FILTERS[curFilter].label+"”");
+      document.querySelector(".section-head").scrollIntoView({behavior:"smooth", block:"start"});
+      return;
+    }
+    var step = e.target.closest("[data-step]");
+    if(step){
+      var i = +step.dataset.i;
+      setQty(i, (CART[i] || 0) + (+step.dataset.step));
+      drawCart();
+      return;
+    }
+    var del = e.target.closest("[data-del]");
+    if(del){ setQty(+del.dataset.del, 0); drawCart(); return; }
+    var unfav = e.target.closest("[data-unfav]");
+    if(unfav){ delete FAVS[+unfav.dataset.unfav]; renderGrid(); drawFavs(); return; }
+    var addf = e.target.closest("[data-addfav]");
+    if(addf){ addToCart(+addf.dataset.addfav); return; }
+  });
+
+  /* --- ตะกร้า --- */
+  function drawCart(){
+    var keys = Object.keys(CART);
+    if(!keys.length){
+      panelFoot.hidden = true;
+      panelBody.innerHTML =
+        '<div class="empty"><img src="assets/mascot-angry.png" alt="">'+
+        '<b>ตะกร้ายังว่างอยู่</b><span>เลือกเมนูอร่อย ๆ ใส่ตะกร้าได้เลย</span></div>';
+      return;
+    }
+    panelBody.innerHTML = keys.map(function(i){
+      var it = ITEMS[i], q = CART[i];
+      return '<div class="line">'+ lineArt(i) +
+        '<div class="line__info"><h4>'+it.n+'</h4><div class="p">'+money(it.p * q)+'</div></div>'+
+        '<div class="qty">'+
+          '<button type="button" data-step="-1" data-i="'+i+'" aria-label="ลดจำนวน">'+SVG.minus+'</button>'+
+          '<span class="n">'+q+'</span>'+
+          '<button type="button" data-step="1" data-i="'+i+'" aria-label="เพิ่มจำนวน">'+SVG.plus+'</button>'+
+        '</div>'+
+        '<button class="icon-only ghost" type="button" data-del="'+i+'" aria-label="ลบออก">'+SVG.trash+'</button>'+
+      '</div>';
+    }).join("");
+
+    var sub = cartTotal(), fee = sub >= 300 ? 0 : 20;
+    panelFoot.hidden = false;
+    panelFoot.innerHTML =
+      '<div class="sum"><span>ราคารวม</span><span>'+money(sub)+'</span></div>'+
+      '<div class="sum"><span>ค่าจัดส่ง'+(fee === 0 ? " (ฟรี เมื่อสั่งครบ ฿300)" : "")+'</span><span>'+(fee ? money(fee) : "ฟรี")+'</span></div>'+
+      '<div class="sum total"><span>ยอดชำระ</span><span>'+money(sub + fee)+'</span></div>'+
+      '<button class="btn-wide" id="checkout" type="button">'+SVG.cart+' สั่งซื้อ '+cartQty()+' รายการ</button>';
+    document.getElementById("checkout").addEventListener("click", function(){
+      CART = {}; syncCartBadge(); closePanel(); setNav(0);
+      showToast("สั่งซื้อสำเร็จ! กำลังจัดเตรียมออเดอร์ของคุณ");
+    });
+  }
+
+  /* --- รายการโปรด --- */
+  function drawFavs(){
+    panelFoot.hidden = true;
+    var keys = Object.keys(FAVS);
+    if(!keys.length){
+      panelBody.innerHTML =
+        '<div class="empty"><img src="assets/mascot-peace.png" alt="">'+
+        '<b>ยังไม่มีรายการโปรด</b><span>กดรูปหัวใจบนเมนูที่ชอบไว้ได้เลย</span></div>';
+      return;
+    }
+    panelBody.innerHTML = keys.map(function(i){
+      var it = ITEMS[i];
+      return '<div class="line">'+ lineArt(i) +
+        '<div class="line__info"><h4>'+it.n+'</h4><div class="p">'+money(it.p)+' / จาน</div></div>'+
+        '<button class="icon-only" type="button" data-addfav="'+i+'" aria-label="ใส่ตะกร้า">'+SVG.plus+'</button>'+
+        '<button class="icon-only ghost" type="button" data-unfav="'+i+'" aria-label="เอาออกจากรายการโปรด">'+SVG.trash+'</button>'+
+      '</div>';
+    }).join("");
+  }
+
+  /* --- บัญชี --- */
+  function drawAccount(){
+    panelFoot.hidden = true;
+    var rows = [
+      ["ที่อยู่จัดส่ง", "128 ถ.พระราม 1 ปทุมวัน กรุงเทพฯ"],
+      ["ประวัติการสั่งซื้อ", "24 ออเดอร์"],
+      ["คูปองส่วนลด", "3 ใบพร้อมใช้"],
+      ["การชำระเงิน", "พร้อมเพย์ · บัตรเครดิต"],
+      ["ตั้งค่าการแจ้งเตือน", ""],
+      ["ช่วยเหลือ / ติดต่อเรา", ""]
+    ];
+    panelBody.innerHTML =
+      '<div class="acct">'+
+        '<div class="acct__ava"><img src="assets/logo.png" alt=""></div>'+
+        '<div class="acct__who"><b>คุณนราธิป</b><span>สมาชิกอิ่มจัง · แต้มสะสม 1,240</span></div>'+
+      '</div>'+
+      rows.map(function(r){
+        return '<div class="acct-row">'+SVG.pinRow+
+          '<div><div>'+r[0]+'</div>'+
+          (r[1] ? '<div style="font-size:12px;color:var(--muted);font-weight:600">'+r[1]+'</div>' : "")+
+          '</div>'+SVG.chev+'</div>';
+      }).join("");
+  }
+
+  /* ---- Bottom nav ---- */
+  var navBtns = Array.prototype.slice.call(document.querySelectorAll(".bottomnav .navitem"));
+  function setNav(idx){
+    navBtns.forEach(function(x, k){
+      x.classList.toggle("is-active", k === idx);
+      if(k === idx) x.setAttribute("aria-current","page"); else x.removeAttribute("aria-current");
+    });
+  }
+  var NAV_ACTIONS = [
+    function(){ closePanel(); window.scrollTo({top:0, behavior:"smooth"}); },
+    function(){ openPanel("cat",  "หมวดหมู่"); },
+    function(){ openPanel("cart", "ตะกร้าของฉัน"); },
+    function(){ openPanel("fav",  "รายการโปรด"); },
+    function(){ openPanel("acct", "บัญชีของฉัน"); }
+  ];
+  navBtns.forEach(function(b, k){
     b.addEventListener("click", function(){
-      document.querySelectorAll(".bottomnav .navitem").forEach(function(x){
-        x.classList.remove("is-active"); x.removeAttribute("aria-current");
-      });
-      b.classList.add("is-active"); b.setAttribute("aria-current","page");
+      setNav(k);
+      (NAV_ACTIONS[k] || function(){})();
     });
   });
 
@@ -1264,6 +1598,7 @@
   });
   document.addEventListener("keydown", function(e){
     if(e.key !== "Escape") return;
+    if(!panel.hidden){ closePanel(); setNav(0); return; }
     if(!shopSheet.hidden){ closeShopSheet(); return; }
     if(!mapView.hidden) closeMap();
   });
