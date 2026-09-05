@@ -449,6 +449,23 @@
   .acct-stat b{display:block;font-size:19px;color:var(--green-700)}
   .acct-stat span{display:block;font-size:11.5px;color:var(--muted);font-weight:700;margin-top:2px}
   .acct-sect{font-size:12px;font-weight:800;color:var(--muted);margin:18px 0 2px;letter-spacing:.4px}
+  .guest-hero{
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    gap:6px;padding:18px 10px 20px;
+  }
+  .guest-hero img{width:132px;height:132px;filter:drop-shadow(0 6px 12px rgba(21,128,61,.22))}
+  .guest-hero b{font-size:19px;color:var(--ink)}
+  .guest-hero span{font-size:13px;color:var(--muted);max-width:34ch;line-height:1.5}
+  .guest-perks{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:6px 0 4px;
+  }
+  .perk{
+    display:flex;align-items:center;gap:9px;background:var(--green-50);
+    border-radius:14px;padding:12px;font-size:12.5px;font-weight:700;color:var(--green-700);
+  }
+  .perk svg{width:18px;height:18px;flex:0 0 auto}
+  .acct-row.locked{opacity:.55}
+  .acct-row .lock{margin-left:auto;width:15px;height:15px;color:var(--muted)}
   .btn-logout{
     display:block;width:100%;height:48px;border-radius:14px;margin-top:22px;
     background:#fee2e2;color:var(--danger);font-size:14px;font-weight:800;
@@ -1058,6 +1075,7 @@
     if(unfav){ delete FAVS[+unfav.dataset.unfav]; renderGrid(); drawFavs(); return; }
     var addf = e.target.closest("[data-addfav]");
     if(addf){ addToCart(+addf.dataset.addfav); return; }
+    if(e.target.closest("[data-locked]")){ showToast("กรุณาเข้าสู่ระบบก่อนใช้งานเมนูนี้"); return; }
   });
 
   /* --- ตะกร้า --- */
@@ -1116,7 +1134,14 @@
     }).join("");
   }
 
-  /* --- บัญชี (เต็มหน้าจอ) --- */
+  /* --- บัญชี (เต็มหน้าจอ) — เริ่มต้นเป็น Guest --- */
+  var ACCOUNT = null;   // null = ยังไม่ได้เข้าสู่ระบบ
+  var DEMO_USER = {
+    name:"คุณนราธิป", email:"naratipjang.45@gmail.com",
+    orders:24, points:1240, coupons:3,
+    addr:"128 ถ.พระราม 1 ปทุมวัน กรุงเทพฯ"
+  };
+
   var ACCT_ICON = {
     addr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
     hist:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
@@ -1124,49 +1149,81 @@
     pay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>',
     bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10.5 20a2 2 0 0 0 3 0"/></svg>',
     help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.1-2.4 3.8"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>',
-    star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.4 5.2 5.6.7-4.1 3.9 1.1 5.7L12 15.8 6.9 18.5 8 12.8 3.9 8.9l5.6-.7L12 3Z"/></svg>'
+    star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.4 5.2 5.6.7-4.1 3.9 1.1 5.7L12 15.8 6.9 18.5 8 12.8 3.9 8.9l5.6-.7L12 3Z"/></svg>',
+    lock:'<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10" width="15" height="10" rx="2.5"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/></svg>',
+    login:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>'
   };
+
+  function acctRow(icon, title, sub, locked){
+    return '<div class="acct-row'+(locked ? " locked" : "")+'"'+(locked ? ' data-locked="1"' : "")+'>'+
+      ACCT_ICON[icon]+
+      '<div><div>'+title+'</div>'+
+      (sub ? '<div style="font-size:12px;color:var(--muted);font-weight:600">'+sub+'</div>' : "")+
+      '</div>'+ (locked ? ACCT_ICON.lock : SVG.chev) +'</div>';
+  }
+
   function drawAccount(){
     panelFoot.hidden = true;
-    var groups = [
-      ["บัญชีและการสั่งซื้อ", [
-        ["addr", "ที่อยู่จัดส่ง", "128 ถ.พระราม 1 ปทุมวัน กรุงเทพฯ"],
-        ["hist", "ประวัติการสั่งซื้อ", "24 ออเดอร์"],
-        ["pay",  "วิธีการชำระเงิน", "พร้อมเพย์ · บัตรเครดิต"]
-      ]],
-      ["สิทธิพิเศษ", [
-        ["coup", "คูปองส่วนลด", "3 ใบพร้อมใช้"],
-        ["star", "แต้มสะสมอิ่มจัง", "1,240 แต้ม"]
-      ]],
-      ["ตั้งค่า", [
-        ["bell", "การแจ้งเตือน", "เปิดอยู่"],
-        ["help", "ช่วยเหลือ / ติดต่อเรา", ""]
-      ]]
-    ];
-    panelBody.innerHTML =
-      '<div class="acct-hero">'+
-        '<div class="acct__ava"><img src="assets/logo.png" alt=""></div>'+
-        '<div class="acct__who"><b>คุณนราธิป</b><span>สมาชิกอิ่มจัง · naratipjang.45@gmail.com</span></div>'+
-      '</div>'+
-      '<div class="acct-stats">'+
-        '<div class="acct-stat"><b>24</b><span>ออเดอร์</span></div>'+
-        '<div class="acct-stat"><b>1,240</b><span>แต้มสะสม</span></div>'+
-        '<div class="acct-stat"><b>3</b><span>คูปอง</span></div>'+
-      '</div>'+
-      groups.map(function(g){
-        return '<div class="acct-sect">'+g[0]+'</div>' +
-          g[1].map(function(r){
-            return '<div class="acct-row">'+ACCT_ICON[r[0]]+
-              '<div><div>'+r[1]+'</div>'+
-              (r[2] ? '<div style="font-size:12px;color:var(--muted);font-weight:600">'+r[2]+'</div>' : "")+
-              '</div>'+SVG.chev+'</div>';
-          }).join("");
-      }).join("")+
-      '<button class="btn-logout" type="button" id="logout">ออกจากระบบ</button>';
-    document.getElementById("logout").addEventListener("click", function(){
-      closePanel(); setNav(0);
+    panelBody.innerHTML = ACCOUNT ? accountHtml() : guestHtml();
+    var lg = document.getElementById("btnLogin");
+    if(lg) lg.addEventListener("click", function(){
+      ACCOUNT = DEMO_USER;
+      drawAccount();
+      showToast("เข้าสู่ระบบเรียบร้อย ยินดีต้อนรับ!");
+    });
+    var lo = document.getElementById("logout");
+    if(lo) lo.addEventListener("click", function(){
+      ACCOUNT = null;
+      drawAccount();
       showToast("ออกจากระบบแล้ว");
     });
+  }
+
+  function guestHtml(){
+    return '<div class="guest-hero">'+
+        '<img src="assets/mascot-peace.png" alt="">'+
+        '<b>ยังไม่ได้เข้าสู่ระบบ</b>'+
+        '<span>เข้าสู่ระบบเพื่อสั่งอาหาร สะสมแต้ม และเก็บที่อยู่จัดส่งของคุณ</span>'+
+      '</div>'+
+      '<button class="btn-wide" type="button" id="btnLogin">'+ACCT_ICON.login+' เข้าสู่ระบบ / สมัครสมาชิก</button>'+
+      '<div class="acct-sect">สิทธิ์ที่จะได้รับ</div>'+
+      '<div class="guest-perks">'+
+        '<div class="perk">'+ACCT_ICON.star+'สะสมแต้มทุกออเดอร์</div>'+
+        '<div class="perk">'+ACCT_ICON.coup+'รับคูปองส่วนลด</div>'+
+        '<div class="perk">'+ACCT_ICON.addr+'บันทึกที่อยู่จัดส่ง</div>'+
+        '<div class="perk">'+ACCT_ICON.hist+'ดูประวัติการสั่งซื้อ</div>'+
+      '</div>'+
+      '<div class="acct-sect">ต้องเข้าสู่ระบบก่อน</div>'+
+      acctRow("addr", "ที่อยู่จัดส่ง", "", true)+
+      acctRow("hist", "ประวัติการสั่งซื้อ", "", true)+
+      acctRow("coup", "คูปองส่วนลด", "", true)+
+      '<div class="acct-sect">ใช้ได้เลย</div>'+
+      acctRow("bell", "การแจ้งเตือน", "เปิดอยู่")+
+      acctRow("help", "ช่วยเหลือ / ติดต่อเรา", "");
+  }
+
+  function accountHtml(){
+    var u = ACCOUNT;
+    return '<div class="acct-hero">'+
+        '<div class="acct__ava"><img src="assets/logo.png" alt=""></div>'+
+        '<div class="acct__who"><b>'+u.name+'</b><span>สมาชิกอิ่มจัง · '+u.email+'</span></div>'+
+      '</div>'+
+      '<div class="acct-stats">'+
+        '<div class="acct-stat"><b>'+u.orders+'</b><span>ออเดอร์</span></div>'+
+        '<div class="acct-stat"><b>'+u.points.toLocaleString("th-TH")+'</b><span>แต้มสะสม</span></div>'+
+        '<div class="acct-stat"><b>'+u.coupons+'</b><span>คูปอง</span></div>'+
+      '</div>'+
+      '<div class="acct-sect">บัญชีและการสั่งซื้อ</div>'+
+      acctRow("addr", "ที่อยู่จัดส่ง", u.addr)+
+      acctRow("hist", "ประวัติการสั่งซื้อ", u.orders + " ออเดอร์")+
+      acctRow("pay",  "วิธีการชำระเงิน", "พร้อมเพย์ · บัตรเครดิต")+
+      '<div class="acct-sect">สิทธิพิเศษ</div>'+
+      acctRow("coup", "คูปองส่วนลด", u.coupons + " ใบพร้อมใช้")+
+      acctRow("star", "แต้มสะสมอิ่มจัง", u.points.toLocaleString("th-TH") + " แต้ม")+
+      '<div class="acct-sect">ตั้งค่า</div>'+
+      acctRow("bell", "การแจ้งเตือน", "เปิดอยู่")+
+      acctRow("help", "ช่วยเหลือ / ติดต่อเรา", "")+
+      '<button class="btn-logout" type="button" id="logout">ออกจากระบบ</button>';
   }
 
   /* ---- Bottom nav ---- */
