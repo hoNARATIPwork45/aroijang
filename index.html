@@ -1833,12 +1833,20 @@
 
   var focusShopIdx = -1;
   function rebuildList(){
-    var near = SHOPS.map(function(sp, i){ return {sp:sp, i:i}; })
-                    .filter(function(o){ return o.i !== focusShopIdx; })
+    if(focusShopIdx >= 0){
+      renderList([{sp:SHOPS[focusShopIdx], i:focusShopIdx, focus:true}]);
+      return;
+    }
+    renderList(SHOPS.map(function(sp, i){ return {sp:sp, i:i}; })
                     .sort(function(a, b){ return a.sp.dist - b.sp.dist; })
-                    .slice(0, 60);
-    if(focusShopIdx >= 0) near.unshift({sp:SHOPS[focusShopIdx], i:focusShopIdx, focus:true});
-    renderList(near);
+                    .slice(0, 60));
+  }
+  function clearFocusShop(){
+    if(focusShopIdx < 0) return;
+    focusShopIdx = -1;
+    if(searchMarker){ map.removeLayer(searchMarker); searchMarker = null; }
+    branchCountEl.textContent = SHOPS.length + " ร้าน";
+    rebuildList();
   }
 
   function fmtKm(km){ return km < 10 ? km.toFixed(1) + " กม." : Math.round(km) + " กม."; }
@@ -2071,6 +2079,7 @@
     document.body.style.overflow = "hidden";
     mapView.classList.remove("ready");
     initMap();
+    if(!pendingFocus && mapPopulated){ clearFocusShop(); clearRoute(); }
     if(!mapPopulated){
       resolveLocation(function(loc, real){
         if(map) map.invalidateSize();
@@ -2111,6 +2120,7 @@
     sp.marker = searchMarker;
 
     map.setView([f.lat, f.lng], 17);
+    branchCountEl.textContent = "ร้านของเมนู";
     rebuildList();
     selectShop(focusShopIdx, false);
     if(USER) showRoute(sp);
