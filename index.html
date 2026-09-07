@@ -325,6 +325,19 @@
   .lpin--brand svg{width:34px;height:44px}
   .lpin--mini{width:30px;height:40px}
   .lpin--mini svg{width:30px;height:40px}
+  .lpin--focus{width:52px;height:64px}
+  .lpin--focus svg{width:52px;height:64px}
+  .focus-halo{
+    position:absolute;left:50%;top:74%;transform:translate(-50%,-50%);
+    width:26px;height:26px;border-radius:50%;background:rgba(220,38,38,.35);
+    animation:haloPulse 1.8s ease-out infinite;
+  }
+  @keyframes haloPulse{
+    0%{transform:translate(-50%,-50%) scale(.6);opacity:.75}
+    70%{transform:translate(-50%,-50%) scale(2.6);opacity:0}
+    100%{opacity:0}
+  }
+  #lmap .focus-pane{z-index:900}
   .lme{width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.25)}
   #lmap .marker-cluster{background:rgba(21,128,61,.28)}
   #lmap .marker-cluster div{background:var(--green-600);color:#fff;font-weight:800}
@@ -1790,6 +1803,17 @@
     if(tileLayer.setZIndex) tileLayer.setZIndex(0);
   }
 
+  var PIN_FOCUS = '<svg viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg">'+
+    '<path d="M18 45C6 28 3 22 3 16A15 15 0 0 1 33 16C33 22 30 28 18 45Z" fill="#dc2626"/>'+
+    '<circle cx="18" cy="16" r="9.5" fill="#fff"/>'+
+    '<circle cx="18" cy="16" r="4.5" fill="#dc2626"/></svg>';
+  function focusPinIcon(){
+    return L.divIcon({
+      className:"",
+      html:'<div class="focus-halo"></div><div class="lpin lpin--focus">'+PIN_FOCUS+'</div>',
+      iconSize:[52,64], iconAnchor:[26,64], popupAnchor:[0,-58]
+    });
+  }
   function pinIcon(closed){
     return L.divIcon({ className:"", html:'<div class="lpin lpin--brand'+(closed ? " lpin--closed" : "")+'">'+(closed ? PIN_CLOSED : PIN)+'</div>',
       iconSize:[34,44], iconAnchor:[17,44], popupAnchor:[0,-40] });
@@ -1804,6 +1828,8 @@
     map = L.map("lmap", {zoomControl:false, attributionControl:true, maxZoom:19})
       .setView([13.7563, 100.5018], 12);
     L.control.zoom({position:"bottomright"}).addTo(map);
+    map.createPane("focusPane");
+    map.getPane("focusPane").classList.add("focus-pane");
     setBasemap("light");
   }
 
@@ -2116,7 +2142,9 @@
     focusShopIdx = SHOPS.length - 1;
 
     if(searchMarker) map.removeLayer(searchMarker);
-    searchMarker = L.marker([f.lat, f.lng], {icon: pinIcon(false), zIndexOffset:1200}).addTo(map);
+    searchMarker = L.marker([f.lat, f.lng],
+      {icon: focusPinIcon(), pane:"focusPane", zIndexOffset:2000}).addTo(map);
+    searchMarker.bindPopup('<b>'+f.label+'</b><br>'+(f.addr || ""));
     searchMarker.on("click", function(){ selectShop(focusShopIdx, false); openShopSheet(focusShopIdx); });
     sp.marker = searchMarker;
 
@@ -2125,6 +2153,7 @@
     rebuildList();
     selectShop(focusShopIdx, false);
     if(USER) showRoute(sp);
+    setTimeout(function(){ if(searchMarker) searchMarker.openPopup(); }, 700);
   }
   function openMapAt(lat, lng, label, addr, cuisine){
     pendingFocus = {lat:lat, lng:lng, label:label, addr:addr, cuisine:cuisine};
