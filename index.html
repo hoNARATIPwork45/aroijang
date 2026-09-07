@@ -466,6 +466,55 @@
   .perk svg{width:18px;height:18px;flex:0 0 auto}
   .acct-row.locked{opacity:.55}
   .acct-row .lock{margin-left:auto;width:15px;height:15px;color:var(--muted)}
+  /* ---------- Auth (เข้าสู่ระบบ / ลงทะเบียน) ---------- */
+  .auth-tabs{
+    display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;
+    background:var(--bg);border-radius:14px;margin-bottom:18px;
+  }
+  .auth-tabs button{
+    height:40px;border-radius:11px;font-size:14px;font-weight:800;color:var(--muted);
+  }
+  .auth-tabs button.is-active{background:var(--surface);color:var(--green-700);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px}
+  .field .wrap{position:relative;display:flex;align-items:center}
+  .field input{
+    width:100%;height:48px;border:1px solid var(--line);border-radius:13px;
+    padding:0 14px;font-size:15px;color:var(--ink);background:var(--surface);
+  }
+  .field input:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(34,197,94,.16)}
+  .field.err input{border-color:var(--danger)}
+  .field .msg{display:none;font-size:12px;color:var(--danger);font-weight:600;margin-top:5px}
+  .field.err .msg{display:block}
+  .field .peek{
+    position:absolute;right:6px;width:38px;height:38px;border-radius:10px;
+    display:grid;place-items:center;color:var(--muted);
+  }
+  .field .peek svg{width:19px;height:19px}
+  .field input[type=password],.field input.haspeek{padding-right:46px}
+  .auth-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 16px}
+  .check{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--muted);font-weight:600;line-height:1.5}
+  .check input{width:19px;height:19px;accent-color:var(--green-600);flex:0 0 auto;margin-top:1px}
+  .link-btn{font-size:13px;font-weight:700;color:var(--green-700);white-space:nowrap}
+  .auth-or{
+    display:flex;align-items:center;gap:12px;margin:20px 0 16px;
+    font-size:12px;font-weight:700;color:var(--muted);
+  }
+  .auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
+  .sso{
+    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:50px;
+    border:1px solid var(--line);border-radius:14px;background:var(--surface);
+    font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:10px;
+  }
+  .sso:active{background:var(--bg)}
+  .sso svg{width:20px;height:20px;flex:0 0 auto}
+  .sso--fb{background:#1877f2;border-color:#1877f2;color:#fff}
+  .sso--line{background:#06c755;border-color:#06c755;color:#fff}
+  .auth-note{
+    font-size:11.5px;color:var(--muted);text-align:center;line-height:1.6;
+    margin-top:16px;padding-top:14px;border-top:1px solid var(--line);
+  }
+  .btn-wide[data-busy]{opacity:.75;pointer-events:none}
   .btn-logout{
     display:block;width:100%;height:48px;border-radius:14px;margin-top:22px;
     background:#fee2e2;color:var(--danger);font-size:14px;font-weight:800;
@@ -1040,6 +1089,7 @@
     if(panelView === "cart")  return drawCart();
     if(panelView === "fav")   return drawFavs();
     if(panelView === "acct")  return drawAccount();
+    if(panelView === "auth")  return drawAuth();
   }
 
   /* --- หมวดหมู่ --- */
@@ -1167,16 +1217,161 @@
     panelBody.innerHTML = ACCOUNT ? accountHtml() : guestHtml();
     var lg = document.getElementById("btnLogin");
     if(lg) lg.addEventListener("click", function(){
-      ACCOUNT = DEMO_USER;
-      drawAccount();
-      showToast("เข้าสู่ระบบเรียบร้อย ยินดีต้อนรับ!");
+      authMode = "login";
+      panelView = "auth";
+      drawAuth();
     });
     var lo = document.getElementById("logout");
     if(lo) lo.addEventListener("click", function(){
       ACCOUNT = null;
+      panelView = "acct";
+      panelTitle.textContent = "บัญชีของฉัน";
       drawAccount();
       showToast("ออกจากระบบแล้ว");
     });
+  }
+
+  var GOOGLE_G = '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">'+
+    '<path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.1z"/>'+
+    '<path fill="#34A853" d="M24 46c6 0 11-2 14.6-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.5 2.1-5.8 0-10.7-3.9-12.4-9.1H4.3v5.7C7.9 41.1 15.4 46 24 46z"/>'+
+    '<path fill="#FBBC05" d="M11.6 28.1c-.4-1.3-.7-2.7-.7-4.1s.2-2.8.7-4.1v-5.7H4.3A22 22 0 0 0 2 24c0 3.6.9 6.9 2.3 9.8l7.3-5.7z"/>'+
+    '<path fill="#EA4335" d="M24 10.8c3.3 0 6.2 1.1 8.5 3.3l6.3-6.3C35 4.3 30 2 24 2 15.4 2 7.9 6.9 4.3 14.1l7.3 5.7c1.7-5.2 6.6-9 12.4-9z"/></svg>';
+  var EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.3 4M6.6 6.7A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.5-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+
+  var authMode = "login";   // "login" | "signup"
+
+  function field(id, label, type, ph, extra){
+    var peek = (type === "password")
+      ? '<button type="button" class="peek" data-peek="'+id+'" aria-label="แสดงรหัสผ่าน">'+EYE+'</button>' : '';
+    return '<div class="field" id="f_'+id+'">'+
+      '<label for="'+id+'">'+label+'</label>'+
+      '<div class="wrap"><input id="'+id+'" type="'+type+'" placeholder="'+ph+'" '+(extra||'')+'>'+peek+'</div>'+
+      '<div class="msg" id="m_'+id+'"></div></div>';
+  }
+
+  function authHtml(){
+    var isLogin = authMode === "login";
+    return '<div class="auth-tabs">'+
+        '<button type="button" data-mode="login"'+(isLogin ? ' class="is-active"' : '')+'>เข้าสู่ระบบ</button>'+
+        '<button type="button" data-mode="signup"'+(!isLogin ? ' class="is-active"' : '')+'>ลงทะเบียน</button>'+
+      '</div>'+
+      '<form id="authForm" novalidate>'+
+        (isLogin ? "" :
+          field("nm", "ชื่อ-นามสกุล", "text", "เช่น นราธิป ใจดี", 'autocomplete="name"') +
+          field("ph", "เบอร์โทรศัพท์", "tel", "08X-XXX-XXXX", 'autocomplete="tel" inputmode="tel"')
+        )+
+        field("em", "อีเมล", "email", "you@example.com", 'autocomplete="email" inputmode="email"')+
+        field("pw", "รหัสผ่าน", "password", "อย่างน้อย 6 ตัวอักษร", 'autocomplete="'+(isLogin ? "current-password" : "new-password")+'"')+
+        (isLogin ? "" : field("pw2", "ยืนยันรหัสผ่าน", "password", "พิมพ์รหัสผ่านอีกครั้ง", 'autocomplete="new-password"'))+
+        (isLogin
+          ? '<div class="auth-row">'+
+              '<label class="check"><input type="checkbox" id="remember" checked> จำฉันไว้</label>'+
+              '<button type="button" class="link-btn" id="forgot">ลืมรหัสผ่าน?</button>'+
+            '</div>'
+          : '<div class="auth-row"><label class="check"><input type="checkbox" id="terms"> '+
+            'ฉันยอมรับ<b style="color:var(--green-700)">เงื่อนไขการใช้งาน</b>และนโยบายความเป็นส่วนตัว</label></div>')+
+        '<button class="btn-wide" type="submit" id="authSubmit" style="margin-top:2px">'+
+          (isLogin ? "เข้าสู่ระบบ" : "สร้างบัญชี")+'</button>'+
+      '</form>'+
+      '<div class="auth-or">หรือ</div>'+
+      '<button class="sso" type="button" data-sso="google">'+GOOGLE_G+' เข้าสู่ระบบด้วย Google</button>'+
+      '<button class="sso sso--fb" type="button" data-sso="facebook">'+
+        '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.7-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12Z"/></svg>'+
+        ' ดำเนินการต่อด้วย Facebook</button>'+
+      '<button class="sso sso--line" type="button" data-sso="line">'+
+        '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.8 3 2.5 6.4 2.5 10.6c0 3.8 3.4 7 8 7.6.3.1.7.2.8.5.1.3.1.6 0 .9l-.1.8c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6h0c1.5-1.6 2.2-3.3 2.2-5.4C22.5 6.4 18.2 3 12 3Z"/></svg>'+
+        ' ดำเนินการต่อด้วย LINE</button>'+
+      '<p class="auth-note">หน้านี้เป็นตัวอย่างสำหรับเดโม — ไม่มีการส่งหรือจัดเก็บข้อมูลของคุณไปยังเซิร์ฟเวอร์ใด ๆ</p>';
+  }
+
+  function setErr(id, msg){
+    var f = document.getElementById("f_" + id);
+    if(!f) return false;
+    f.classList.toggle("err", !!msg);
+    var m = document.getElementById("m_" + id);
+    if(m) m.textContent = msg || "";
+    return !msg;
+  }
+  function val(id){
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  }
+
+  function finishLogin(name, email, how){
+    ACCOUNT = {
+      name: name || DEMO_USER.name,
+      email: email || DEMO_USER.email,
+      orders: DEMO_USER.orders, points: DEMO_USER.points,
+      coupons: DEMO_USER.coupons, addr: DEMO_USER.addr
+    };
+    panelView = "acct";
+    panelTitle.textContent = "บัญชีของฉัน";
+    drawAccount();
+    showToast(how ? ("เข้าสู่ระบบด้วย " + how + " แล้ว") : "ยินดีต้อนรับ " + ACCOUNT.name);
+  }
+
+  function wireAuth(){
+    panelBody.querySelectorAll("[data-mode]").forEach(function(b){
+      b.addEventListener("click", function(){
+        authMode = b.dataset.mode;
+        drawAuth();
+      });
+    });
+    panelBody.querySelectorAll("[data-peek]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var inp = document.getElementById(b.dataset.peek);
+        var show = inp.type === "password";
+        inp.type = show ? "text" : "password";
+        b.innerHTML = show ? EYE_OFF : EYE;
+      });
+    });
+    panelBody.querySelectorAll("[data-sso]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var how = {google:"Google", facebook:"Facebook", line:"LINE"}[b.dataset.sso];
+        b.setAttribute("data-busy","1");
+        showToast("กำลังเชื่อมต่อ " + how + "…");
+        setTimeout(function(){ finishLogin(DEMO_USER.name, DEMO_USER.email, how); }, 900);
+      });
+    });
+    var forgot = document.getElementById("forgot");
+    if(forgot) forgot.addEventListener("click", function(){
+      showToast("ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว (เดโม)");
+    });
+
+    var form = document.getElementById("authForm");
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      var ok = true, isLogin = authMode === "login";
+      var em = val("em"), pw = val("pw");
+
+      ok = setErr("em", /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em) ? "" : "กรุณากรอกอีเมลให้ถูกต้อง") && ok;
+      ok = setErr("pw", pw.length >= 6 ? "" : "รหัสผ่านอย่างน้อย 6 ตัวอักษร") && ok;
+
+      if(!isLogin){
+        ok = setErr("nm", val("nm").length >= 2 ? "" : "กรุณากรอกชื่อ-นามสกุล") && ok;
+        ok = setErr("ph", /^0\d{8,9}$/.test(val("ph").replace(/[-\s]/g, "")) ? "" : "กรุณากรอกเบอร์โทรให้ถูกต้อง") && ok;
+        ok = setErr("pw2", val("pw2") === pw && pw ? "" : "รหัสผ่านไม่ตรงกัน") && ok;
+        var terms = document.getElementById("terms");
+        if(terms && !terms.checked){ showToast("กรุณายอมรับเงื่อนไขการใช้งานก่อน"); ok = false; }
+      }
+      if(!ok) return;
+
+      var btn = document.getElementById("authSubmit");
+      btn.setAttribute("data-busy","1");
+      btn.textContent = isLogin ? "กำลังเข้าสู่ระบบ…" : "กำลังสร้างบัญชี…";
+      setTimeout(function(){
+        finishLogin(isLogin ? "" : val("nm"), em, "");
+      }, 800);
+    });
+  }
+
+  function drawAuth(){
+    panelFoot.hidden = true;
+    panelTitle.textContent = authMode === "login" ? "เข้าสู่ระบบ" : "ลงทะเบียน";
+    panelBody.innerHTML = authHtml();
+    panelBody.scrollTop = 0;
+    wireAuth();
   }
 
   function guestHtml(){
