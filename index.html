@@ -1617,7 +1617,7 @@
   document.getElementById("isExpandHit").addEventListener("click", function(){
     var info = itemInfo(curItem);
     closeItemSheet();
-    openMapAt(info.lat, info.lng, info.shop);
+    openMapAt(info.lat, info.lng, info.shop, info.addr, CUISINE_OF[ITEMS[curItem].c]);
   });
 
   /* ---- Map view: ร้านอาหารใกล้ฉัน (Leaflet + OpenStreetMap) ---- */
@@ -1825,12 +1825,20 @@
     });
     map.addLayer(shopCluster);
 
+    focusShopIdx = -1;
+    branchCountEl.textContent = SHOPS.length + " ร้าน";
+    rebuildList();
+    mapPopulated = true;
+  }
+
+  var focusShopIdx = -1;
+  function rebuildList(){
     var near = SHOPS.map(function(sp, i){ return {sp:sp, i:i}; })
+                    .filter(function(o){ return o.i !== focusShopIdx; })
                     .sort(function(a, b){ return a.sp.dist - b.sp.dist; })
                     .slice(0, 60);
-    branchCountEl.textContent = SHOPS.length + " ร้าน";
+    if(focusShopIdx >= 0) near.unshift({sp:SHOPS[focusShopIdx], i:focusShopIdx, focus:true});
     renderList(near);
-    mapPopulated = true;
   }
 
   function fmtKm(km){ return km < 10 ? km.toFixed(1) + " กม." : Math.round(km) + " กม."; }
@@ -1838,7 +1846,8 @@
   function renderList(near){
     branchList.innerHTML = near.map(function(o, rank){
       var sp = o.sp;
-      var badge = rank === 0 ? '<span class="branch__badge">ใกล้ที่สุด</span>'
+      var badge = o.focus ? '<span class="branch__badge">ร้านของเมนูนี้</span>'
+                : rank === 0 ? '<span class="branch__badge">ใกล้ที่สุด</span>'
                 : sp.brand ? '<span class="branch__badge">อิ่มจัง</span>' : '';
       return '<article class="branch" data-i="'+o.i+'">'+
         '<div class="branch__art'+(sp.closed ? " is-closed" : "")+'" aria-hidden="true">'+shopArt(sp)+'</div>'+
@@ -2077,16 +2086,37 @@
   }
   var pendingFocus = null;
   function applyPendingFocus(){
-    if(!pendingFocus || !map) return;
+    if(!pendingFocus || !map || !mapPopulated) return;
     var f = pendingFocus; pendingFocus = null;
+
+    // สร้างรายการร้านของเมนูที่เลือก แล้ววางไว้บนสุดของรายการ
+    var sp = {
+      brand: /อิ่มจัง/.test(f.label),
+      name: f.label.replace(/^อิ่มจัง\s*·\s*/, ""),
+      a: f.addr || "",
+      lat: f.lat, lng: f.lng,
+      rating: 4.8, sold: 1860, price: "฿฿",
+      closed: false, openAt: "10:00", closeAt: "21:00",
+      s: "เปิดอยู่ · ปิด 21:00 น.",
+      phone: makePhone(), cuisine: f.cuisine || "อาหารตามสั่ง",
+      img: IMGS[0],
+      dist: USER ? distKm(USER, {lat:f.lat, lng:f.lng}) : 0
+    };
+    SHOPS.push(sp);
+    focusShopIdx = SHOPS.length - 1;
+
+    if(searchMarker) map.removeLayer(searchMarker);
+    searchMarker = L.marker([f.lat, f.lng], {icon: pinIcon(false), zIndexOffset:1200}).addTo(map);
+    searchMarker.on("click", function(){ selectShop(focusShopIdx, false); openShopSheet(focusShopIdx); });
+    sp.marker = searchMarker;
+
     map.setView([f.lat, f.lng], 17);
-    if(searchMarker) searchMarker.setLatLng([f.lat, f.lng]);
-    else searchMarker = L.marker([f.lat, f.lng], {icon: pinIcon(false), zIndexOffset:900}).addTo(map);
-    searchMarker.bindPopup("<b>"+f.label+"</b>").openPopup();
-    if(USER) showRoute({lat:f.lat, lng:f.lng, dist: distKm(USER, {lat:f.lat, lng:f.lng})});
+    rebuildList();
+    selectShop(focusShopIdx, false);
+    if(USER) showRoute(sp);
   }
-  function openMapAt(lat, lng, label){
-    pendingFocus = {lat:lat, lng:lng, label:label};
+  function openMapAt(lat, lng, label, addr, cuisine){
+    pendingFocus = {lat:lat, lng:lng, label:label, addr:addr, cuisine:cuisine};
     openMap();
   }
   function closeMap(){ closeShopSheet(); mapView.hidden = true; document.body.style.overflow = ""; mapBtn.focus(); }
