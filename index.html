@@ -529,6 +529,20 @@
   }
   .pill-pick button.is-active{background:var(--green-600);border-color:var(--green-600);color:#fff}
   .lpin--mine svg{filter:none}
+  .mc-banner{
+    display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:16px;
+    background:var(--green-50);margin-bottom:14px;
+  }
+  .mc-banner svg{width:22px;height:22px;color:var(--green-700);flex:0 0 auto}
+  .mc-banner b{display:block;font-size:14px;color:var(--green-700)}
+  .mc-banner span{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+  .gate{
+    display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;
+    padding:26px 14px 20px;
+  }
+  .gate svg{width:54px;height:54px;color:var(--green-600)}
+  .gate b{font-size:17px}
+  .gate span{font-size:13px;color:var(--muted);max-width:32ch;line-height:1.55}
   /* ---------- Auth (เข้าสู่ระบบ / ลงทะเบียน) ---------- */
   .auth-tabs{
     display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;
@@ -1270,6 +1284,8 @@
     if(panelView === "fav")   return drawFavs();
     if(panelView === "acct")  return drawAccount();
     if(panelView === "auth")  return drawAuth();
+    if(panelView === "mcgate")   return drawMcGate();
+    if(panelView === "mcsignup") return drawMcSignup();
     if(panelView === "merchant") return drawMerchant();
     if(panelView === "shopform") return drawShopForm(editIdx >= 0 ? MY_SHOPS[editIdx] : null);
   }
@@ -1307,7 +1323,7 @@
     if(unfav){ delete FAVS[+unfav.dataset.unfav]; renderGrid(); drawFavs(); return; }
     var addf = e.target.closest("[data-addfav]");
     if(addf){ addToCart(+addf.dataset.addfav); return; }
-    if(e.target.closest("[data-merchant]")){ openPanel("merchant", "ร้านค้าของฉัน", true); return; }
+    if(e.target.closest("[data-merchant]")){ openMerchantFlow(); return; }
     if(e.target.closest("[data-locked]")){ showToast("กรุณาเข้าสู่ระบบก่อนใช้งานเมนูนี้"); return; }
   });
 
@@ -1369,8 +1385,18 @@
 
   /* ---- ร้านค้าของฉัน (เก็บใน localStorage) ---- */
   var MY_KEY = "aroijang.myshops";
+  var MC_KEY = "aroijang.merchant";
   var MY_SHOPS = [];
+  var MERCHANT = null;     // บัญชีร้านค้า (null = ยังไม่สมัคร)
   try { MY_SHOPS = JSON.parse(localStorage.getItem(MY_KEY) || "[]") || []; } catch(e){ MY_SHOPS = []; }
+  try { MERCHANT = JSON.parse(localStorage.getItem(MC_KEY) || "null"); } catch(e){ MERCHANT = null; }
+  function saveMerchant(){
+    try {
+      if(MERCHANT) localStorage.setItem(MC_KEY, JSON.stringify(MERCHANT));
+      else localStorage.removeItem(MC_KEY);
+    } catch(e){}
+  }
+  function isMerchant(){ return !!(ACCOUNT && MERCHANT); }
   function saveMyShops(){
     try { localStorage.setItem(MY_KEY, JSON.stringify(MY_SHOPS)); } catch(e){}
   }
@@ -1387,11 +1413,97 @@
     loc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>'
   };
 
+  var LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10" width="15" height="10" rx="2.5"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/></svg>';
+
+  /* จุดเข้าเดียว: ตรวจสถานะก่อนว่าเข้าสู่ระบบ / เป็นร้านค้าแล้วหรือยัง */
+  function openMerchantFlow(){
+    if(!ACCOUNT){
+      openPanel("mcgate", "สำหรับร้านค้า", true);
+      return;
+    }
+    if(!MERCHANT){
+      openPanel("mcsignup", "สมัครบัญชีร้านค้า", true);
+      return;
+    }
+    openPanel("merchant", "ร้านค้าของฉัน", true);
+  }
+
+  /* --- ยังไม่เข้าสู่ระบบ --- */
+  function drawMcGate(){
+    panelFoot.hidden = true;
+    panelBody.innerHTML =
+      '<div class="gate">'+LOCK_SVG+
+        '<b>ต้องเข้าสู่ระบบก่อน</b>'+
+        '<span>การเปิดร้านบนอิ่มจังต้องมีบัญชีผู้ใช้ก่อน แล้วจึงสมัครบัญชีร้านค้าเพื่อเพิ่มร้านของคุณ</span>'+
+      '</div>'+
+      '<button class="btn-wide" type="button" id="mcGoLogin">'+ACCT_ICON.login+' เข้าสู่ระบบ / สมัครสมาชิก</button>'+
+      '<div class="acct-sect">ขั้นตอนการเปิดร้าน</div>'+
+      acctRow("hist", "1. เข้าสู่ระบบบัญชีผู้ใช้", "")+
+      acctRow("store2", "2. สมัครบัญชีร้านค้า", "กรอกข้อมูลกิจการ")+
+      acctRow("addr", "3. เพิ่มร้านลงบนแผนที่", "ตั้งชื่อ เวลา และพิกัดร้าน");
+    document.getElementById("mcGoLogin").addEventListener("click", function(){
+      authMode = "login"; panelView = "auth"; drawAuth();
+    });
+  }
+
+  /* --- ฟอร์มสมัครบัญชีร้านค้า --- */
+  function drawMcSignup(){
+    panelFoot.hidden = true;
+    panelBody.innerHTML =
+      '<div class="mc-banner">'+MC_ICON.store+
+        '<div><b>สมัครบัญชีร้านค้า</b>'+
+        '<span>บัญชีนี้ใช้สำหรับแม่ค้า/เจ้าของร้านเท่านั้น</span></div>'+
+      '</div>'+
+      '<form id="mcForm" novalidate>'+
+        field("bName", "ชื่อกิจการ / ชื่อร้านหลัก *", "text", "เช่น ครัวคุณแม่บ้านสวน", 'value=""')+
+        field("bOwner", "ชื่อผู้ติดต่อ *", "text", "ชื่อ-นามสกุลเจ้าของร้าน", 'value="'+(ACCOUNT ? ACCOUNT.name : "")+'"')+
+        field("bPhone", "เบอร์โทรร้าน *", "tel", "08X-XXX-XXXX", 'inputmode="tel"')+
+        field("bEmail", "อีเมลติดต่อ *", "email", "shop@example.com", 'inputmode="email" value="'+(ACCOUNT ? ACCOUNT.email : "")+'"')+
+        '<div class="field"><label for="bType">ประเภทกิจการ</label><div class="wrap">'+
+          '<select id="bType">'+
+            ["ร้านอาหาร / ตามสั่ง","ร้านก๋วยเตี๋ยว / เส้น","ร้านอาหารอีสาน","ปิ้งย่าง / หมูกระทะ",
+             "คาเฟ่ / ของหวาน","รถเข็น / ฟู้ดทรัค","ร้านในตลาด","อื่น ๆ"].map(function(x){
+              return '<option>'+x+'</option>';
+            }).join("")+
+          '</select></div></div>'+
+        '<div class="auth-row"><label class="check"><input type="checkbox" id="bTerms"> '+
+          'ฉันเป็นเจ้าของร้าน/ผู้มีอำนาจ และยอมรับ<b style="color:var(--green-700)">ข้อตกลงสำหรับผู้ขาย</b></label></div>'+
+        '<button class="btn-wide" type="submit">สมัครบัญชีร้านค้า</button>'+
+      '</form>'+
+      '<p class="auth-note">เดโม — ข้อมูลเก็บในเครื่องของคุณเท่านั้น ไม่มีการส่งออกและไม่ขอเอกสารยืนยันตัวตนใด ๆ</p>';
+
+    document.getElementById("mcForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var ok = true;
+      ok = setErr("bName", val("bName").length >= 2 ? "" : "กรุณากรอกชื่อกิจการ") && ok;
+      ok = setErr("bOwner", val("bOwner").length >= 2 ? "" : "กรุณากรอกชื่อผู้ติดต่อ") && ok;
+      ok = setErr("bPhone", /^0\d{8,9}$/.test(val("bPhone").replace(/[-\s]/g, "")) ? "" : "กรุณากรอกเบอร์โทรให้ถูกต้อง") && ok;
+      ok = setErr("bEmail", /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val("bEmail")) ? "" : "กรุณากรอกอีเมลให้ถูกต้อง") && ok;
+      if(!document.getElementById("bTerms").checked){
+        showToast("กรุณายอมรับข้อตกลงสำหรับผู้ขายก่อน"); ok = false;
+      }
+      if(!ok) return;
+      MERCHANT = {
+        biz: val("bName"), owner: val("bOwner"),
+        phone: val("bPhone"), email: val("bEmail"),
+        type: document.getElementById("bType").value,
+        since: new Date().toISOString().slice(0, 10)
+      };
+      saveMerchant();
+      openPanel("merchant", "ร้านค้าของฉัน", true);
+      showToast("สมัครบัญชีร้านค้าสำเร็จ! เพิ่มร้านของคุณได้เลย");
+    });
+  }
+
   /* --- หน้ารวมร้านของฉัน --- */
   function drawMerchant(){
     panelFoot.hidden = true;
+    if(!isMerchant()){ openMerchantFlow(); return; }
+    var head = '<div class="mc-banner">'+MC_ICON.store+
+      '<div><b>'+MERCHANT.biz+'</b>'+
+      '<span>บัญชีร้านค้า · '+MERCHANT.type+' · เปิดใช้ '+MERCHANT.since+'</span></div></div>';
     if(!MY_SHOPS.length){
-      panelBody.innerHTML =
+      panelBody.innerHTML = head +
         '<div class="mc-hero">'+
           '<img src="assets/mascot-peace.png" alt="">'+
           '<b>เปิดร้านบนอิ่มจัง</b>'+
@@ -1407,7 +1519,7 @@
         '</div>'+
         '<p class="auth-note">ข้อมูลร้านถูกเก็บไว้ในเครื่องของคุณเท่านั้น (เดโม) ไม่ถูกส่งออกไปที่ใด</p>';
     } else {
-      panelBody.innerHTML =
+      panelBody.innerHTML = head +
         '<div class="acct-sect">ร้านของฉัน ('+MY_SHOPS.length+')</div>'+
         MY_SHOPS.map(function(s, k){
           return '<div class="mc-card">'+
@@ -1433,14 +1545,16 @@
   /* --- ฟอร์มเพิ่ม / แก้ไขร้าน --- */
   var editIdx = -1, formLoc = null, formPrice = "฿฿";
   function openShopForm(k){
+    if(!isMerchant()){
+      showToast(ACCOUNT ? "ต้องสมัครบัญชีร้านค้าก่อนเพิ่มร้าน" : "กรุณาเข้าสู่ระบบก่อน");
+      openMerchantFlow();
+      return;
+    }
     editIdx = k;
     var s = (k >= 0) ? MY_SHOPS[k] : null;
     formLoc = s ? {lat:s.lat, lng:s.lng} : (USER ? {lat:USER.lat, lng:USER.lng} : {lat:13.7563, lng:100.5018});
     formPrice = s ? s.price : "฿฿";
-    panelView = "shopform";
-    panel.classList.add("panel--full");
-    panelTitle.textContent = (k >= 0) ? "แก้ไขร้าน" : "เพิ่มร้านของฉัน";
-    drawShopForm(s);
+    openPanel("shopform", (k >= 0) ? "แก้ไขร้าน" : "เพิ่มร้านของฉัน", true);
   }
   function drawShopForm(s){
     panelFoot.hidden = true;
@@ -1567,6 +1681,7 @@
     bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10.5 20a2 2 0 0 0 3 0"/></svg>',
     help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.1-2.4 3.8"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>',
     star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.4 5.2 5.6.7-4.1 3.9 1.1 5.7L12 15.8 6.9 18.5 8 12.8 3.9 8.9l5.6-.7L12 3Z"/></svg>',
+    store2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 5 4h14l2 5.5"/><path d="M4 9.5V20h16V9.5"/><path d="M9 20v-5h6v5"/></svg>',
     lock:'<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10" width="15" height="10" rx="2.5"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/></svg>',
     login:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>'
   };
@@ -1762,9 +1877,8 @@
       '<div class="acct-sect">สำหรับร้านค้า</div>'+
       '<div class="acct-row" data-merchant="1">'+MC_ICON.store+
         '<div><div>สมัครเป็นร้านค้า</div>'+
-        '<div style="font-size:12px;color:var(--muted);font-weight:600">'+
-          (MY_SHOPS.length ? ("มีร้านของคุณ " + MY_SHOPS.length + " ร้าน") : "เพิ่มร้านของคุณลงบนแผนที่")+
-        '</div></div>'+SVG.chev+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);font-weight:600">ต้องเข้าสู่ระบบก่อน</div>'+
+        '</div>'+ACCT_ICON.lock+'</div>'+
       '<div class="acct-sect">ใช้ได้เลย</div>'+
       acctRow("bell", "การแจ้งเตือน", "เปิดอยู่")+
       acctRow("help", "ช่วยเหลือ / ติดต่อเรา", "");
@@ -1790,9 +1904,11 @@
       acctRow("star", "แต้มสะสมอิ่มจัง", u.points.toLocaleString("th-TH") + " แต้ม")+
       '<div class="acct-sect">สำหรับร้านค้า</div>'+
       '<div class="acct-row" data-merchant="1">'+MC_ICON.store+
-        '<div><div>ร้านค้าของฉัน</div>'+
+        '<div><div>'+(MERCHANT ? "ร้านค้าของฉัน" : "สมัครบัญชีร้านค้า")+'</div>'+
         '<div style="font-size:12px;color:var(--muted);font-weight:600">'+
-          (MY_SHOPS.length ? (MY_SHOPS.length + " ร้านบนแผนที่") : "สมัครเป็นร้านค้า / เพิ่มร้าน")+
+          (MERCHANT
+            ? (MY_SHOPS.length ? (MY_SHOPS.length + " ร้านบนแผนที่") : "ยังไม่มีร้าน · เพิ่มร้านได้เลย")
+            : "สำหรับแม่ค้า/เจ้าของร้านเท่านั้น")+
         '</div></div>'+SVG.chev+'</div>'+
       '<div class="acct-sect">ตั้งค่า</div>'+
       acctRow("bell", "การแจ้งเตือน", "เปิดอยู่")+
