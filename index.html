@@ -480,6 +480,55 @@
   .perk svg{width:18px;height:18px;flex:0 0 auto}
   .acct-row.locked{opacity:.55}
   .acct-row .lock{margin-left:auto;width:15px;height:15px;color:var(--muted)}
+  /* ---------- Merchant (สมัครร้านค้า / ร้านของฉัน) ---------- */
+  .mc-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:14px 10px 18px}
+  .mc-hero img{width:124px;height:124px;filter:drop-shadow(0 6px 12px rgba(21,128,61,.22))}
+  .mc-hero b{font-size:18px;color:var(--ink)}
+  .mc-hero span{font-size:13px;color:var(--muted);max-width:34ch;line-height:1.55}
+  .mc-card{
+    display:flex;gap:12px;align-items:center;padding:12px;margin-bottom:10px;
+    border:1px solid var(--line);border-radius:16px;background:var(--surface);
+  }
+  .mc-card__art{width:62px;height:62px;border-radius:12px;overflow:hidden;flex:0 0 auto}
+  .mc-card__art svg{width:100%;height:100%;display:block}
+  .mc-card__info{flex:1;min-width:0}
+  .mc-card__info h4{font-size:14.5px;font-weight:700}
+  .mc-card__info .sub{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+  .mc-card__info .st{font-size:12px;font-weight:800;margin-top:3px}
+  .mc-card__info .st.open{color:var(--green-600)}
+  .mc-card__info .st.closed{color:var(--danger)}
+  .mc-acts{display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
+  .mc-mini{
+    width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+    background:var(--green-50);color:var(--green-700);
+  }
+  .mc-mini svg{width:17px;height:17px}
+  .mc-mini.del{background:#fee2e2;color:var(--danger)}
+  .field select{
+    width:100%;height:48px;border:1px solid var(--line);border-radius:13px;
+    padding:0 12px;font-size:15px;color:var(--ink);background:var(--surface);
+    font-family:inherit;
+  }
+  .field select:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(34,197,94,.16)}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .loc-box{
+    display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);
+    border-radius:13px;background:var(--bg);margin-bottom:13px;
+  }
+  .loc-box svg{width:19px;height:19px;color:var(--green-600);flex:0 0 auto}
+  .loc-box .t{flex:1;min-width:0;font-size:12.5px;line-height:1.45}
+  .loc-box .t b{display:block;font-size:11px;color:var(--muted);font-weight:700}
+  .loc-box button{
+    flex:0 0 auto;padding:9px 12px;border-radius:11px;background:var(--green-600);color:#fff;
+    font-size:12px;font-weight:800;
+  }
+  .pill-pick{display:flex;gap:8px}
+  .pill-pick button{
+    flex:1;height:44px;border-radius:12px;border:1px solid var(--line);
+    background:var(--surface);font-size:14px;font-weight:800;color:var(--muted);
+  }
+  .pill-pick button.is-active{background:var(--green-600);border-color:var(--green-600);color:#fff}
+  .lpin--mine svg{filter:none}
   /* ---------- Auth (เข้าสู่ระบบ / ลงทะเบียน) ---------- */
   .auth-tabs{
     display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;
@@ -1221,6 +1270,8 @@
     if(panelView === "fav")   return drawFavs();
     if(panelView === "acct")  return drawAccount();
     if(panelView === "auth")  return drawAuth();
+    if(panelView === "merchant") return drawMerchant();
+    if(panelView === "shopform") return drawShopForm(editIdx >= 0 ? MY_SHOPS[editIdx] : null);
   }
 
   /* --- หมวดหมู่ --- */
@@ -1256,6 +1307,7 @@
     if(unfav){ delete FAVS[+unfav.dataset.unfav]; renderGrid(); drawFavs(); return; }
     var addf = e.target.closest("[data-addfav]");
     if(addf){ addToCart(+addf.dataset.addfav); return; }
+    if(e.target.closest("[data-merchant]")){ openPanel("merchant", "ร้านค้าของฉัน", true); return; }
     if(e.target.closest("[data-locked]")){ showToast("กรุณาเข้าสู่ระบบก่อนใช้งานเมนูนี้"); return; }
   });
 
@@ -1313,6 +1365,190 @@
         '<button class="icon-only ghost" type="button" data-unfav="'+i+'" aria-label="เอาออกจากรายการโปรด">'+SVG.trash+'</button>'+
       '</div>';
     }).join("");
+  }
+
+  /* ---- ร้านค้าของฉัน (เก็บใน localStorage) ---- */
+  var MY_KEY = "aroijang.myshops";
+  var MY_SHOPS = [];
+  try { MY_SHOPS = JSON.parse(localStorage.getItem(MY_KEY) || "[]") || []; } catch(e){ MY_SHOPS = []; }
+  function saveMyShops(){
+    try { localStorage.setItem(MY_KEY, JSON.stringify(MY_SHOPS)); } catch(e){}
+  }
+  function myShopStatus(s){
+    return s.closed ? ("ปิดอยู่ · เปิด " + s.openAt + " น.") : ("เปิดอยู่ · ปิด " + s.closeAt + " น.");
+  }
+
+  var MC_ICON = {
+    store:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 5 4h14l2 5.5"/><path d="M4 9.5V20h16V9.5"/><path d="M9 20v-5h6v5"/></svg>',
+    edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16v4Z"/><path d="M13.5 6.5 17.5 10.5"/></svg>',
+    trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>',
+    eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    loc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>'
+  };
+
+  /* --- หน้ารวมร้านของฉัน --- */
+  function drawMerchant(){
+    panelFoot.hidden = true;
+    if(!MY_SHOPS.length){
+      panelBody.innerHTML =
+        '<div class="mc-hero">'+
+          '<img src="assets/mascot-peace.png" alt="">'+
+          '<b>เปิดร้านบนอิ่มจัง</b>'+
+          '<span>สมัครเป็นร้านค้า เพิ่มร้านของคุณลงบนแผนที่ ให้ลูกค้าใกล้ ๆ เจอร้านคุณได้ทันที</span>'+
+        '</div>'+
+        '<button class="btn-wide" type="button" id="mcAdd">'+MC_ICON.plus+' เพิ่มร้านของฉัน</button>'+
+        '<div class="acct-sect">สิ่งที่คุณจะได้</div>'+
+        '<div class="guest-perks">'+
+          '<div class="perk">'+MC_ICON.store+'ร้านขึ้นบนแผนที่</div>'+
+          '<div class="perk">'+MC_ICON.loc+'ลูกค้าใกล้ร้านเห็นก่อน</div>'+
+          '<div class="perk">'+ACCT_ICON.hist+'ดูออเดอร์ในที่เดียว</div>'+
+          '<div class="perk">'+ACCT_ICON.coup+'ปล่อยคูปองของร้าน</div>'+
+        '</div>'+
+        '<p class="auth-note">ข้อมูลร้านถูกเก็บไว้ในเครื่องของคุณเท่านั้น (เดโม) ไม่ถูกส่งออกไปที่ใด</p>';
+    } else {
+      panelBody.innerHTML =
+        '<div class="acct-sect">ร้านของฉัน ('+MY_SHOPS.length+')</div>'+
+        MY_SHOPS.map(function(s, k){
+          return '<div class="mc-card">'+
+            '<div class="mc-card__art">'+shopArt({cuisine:s.cuisine})+'</div>'+
+            '<div class="mc-card__info">'+
+              '<h4>'+s.name+'</h4>'+
+              '<div class="sub">'+s.cuisine+' · '+s.price+'<br>'+s.a+'</div>'+
+              '<div class="st '+(s.closed ? "closed" : "open")+'">'+myShopStatus(s)+'</div>'+
+            '</div>'+
+            '<div class="mc-acts">'+
+              '<button class="mc-mini" type="button" data-mcview="'+k+'" aria-label="ดูบนแผนที่">'+MC_ICON.eye+'</button>'+
+              '<button class="mc-mini" type="button" data-mcedit="'+k+'" aria-label="แก้ไข">'+MC_ICON.edit+'</button>'+
+              '<button class="mc-mini del" type="button" data-mcdel="'+k+'" aria-label="ลบ">'+MC_ICON.trash+'</button>'+
+            '</div>'+
+          '</div>';
+        }).join("")+
+        '<button class="btn-wide" type="button" id="mcAdd">'+MC_ICON.plus+' เพิ่มร้านใหม่</button>';
+    }
+    var add = document.getElementById("mcAdd");
+    if(add) add.addEventListener("click", function(){ openShopForm(-1); });
+  }
+
+  /* --- ฟอร์มเพิ่ม / แก้ไขร้าน --- */
+  var editIdx = -1, formLoc = null, formPrice = "฿฿";
+  function openShopForm(k){
+    editIdx = k;
+    var s = (k >= 0) ? MY_SHOPS[k] : null;
+    formLoc = s ? {lat:s.lat, lng:s.lng} : (USER ? {lat:USER.lat, lng:USER.lng} : {lat:13.7563, lng:100.5018});
+    formPrice = s ? s.price : "฿฿";
+    panelView = "shopform";
+    panel.classList.add("panel--full");
+    panelTitle.textContent = (k >= 0) ? "แก้ไขร้าน" : "เพิ่มร้านของฉัน";
+    drawShopForm(s);
+  }
+  function drawShopForm(s){
+    panelFoot.hidden = true;
+    panelBody.innerHTML =
+      '<form id="shopForm" novalidate>'+
+        field("sName", "ชื่อร้าน *", "text", "เช่น ครัวคุณแม่", 'value="'+(s ? s.name.replace(/"/g,"&quot;") : "")+'"')+
+        '<div class="field"><label for="sCui">ประเภทอาหาร</label><div class="wrap">'+
+          '<select id="sCui">'+CUISINES.map(function(c){
+            return '<option'+(s && s.cuisine === c ? " selected" : "")+'>'+c+'</option>';
+          }).join("")+'</select></div></div>'+
+        field("sPhone", "เบอร์โทร *", "tel", "08X-XXX-XXXX", 'inputmode="tel" value="'+(s ? s.phone : "")+'"')+
+        field("sAddr", "ที่อยู่ร้าน *", "text", "เลขที่ / ถนน / เขต", 'value="'+(s ? s.a.replace(/"/g,"&quot;") : "")+'"')+
+        '<div class="field-row">'+
+          field("sOpen", "เวลาเปิด", "time", "", 'value="'+(s ? s.openAt : "10:00")+'"')+
+          field("sClose", "เวลาปิด", "time", "", 'value="'+(s ? s.closeAt : "21:00")+'"')+
+        '</div>'+
+        '<div class="field"><label>ระดับราคา</label><div class="pill-pick" id="sPrice">'+
+          ["฿","฿฿","฿฿฿"].map(function(pp){
+            return '<button type="button" data-price="'+pp+'"'+(formPrice === pp ? ' class="is-active"' : '')+'>'+pp+'</button>';
+          }).join("")+'</div></div>'+
+        '<div class="field"><label>ตำแหน่งร้านบนแผนที่</label></div>'+
+        '<div class="loc-box">'+MC_ICON.loc+
+          '<div class="t"><b>พิกัด</b><span id="sLoc">'+formLoc.lat.toFixed(5)+', '+formLoc.lng.toFixed(5)+'</span></div>'+
+          '<button type="button" id="sUseLoc">ใช้ตำแหน่งปัจจุบัน</button>'+
+        '</div>'+
+        '<label class="check" style="margin-bottom:14px"><input type="checkbox" id="sClosedNow"'+(s && s.closed ? " checked" : "")+'> ตอนนี้ปิดร้านชั่วคราว</label>'+
+        '<button class="btn-wide" type="submit">'+(editIdx >= 0 ? "บันทึกการแก้ไข" : "บันทึกและเพิ่มลงแผนที่")+'</button>'+
+        (editIdx >= 0 ? '<button class="btn-logout" type="button" id="sDel">ลบร้านนี้</button>' : '')+
+      '</form>'+
+      '<p class="auth-note">ข้อมูลร้านเก็บในเครื่องของคุณ (localStorage) เท่านั้น</p>';
+
+    panelBody.querySelectorAll("[data-price]").forEach(function(b){
+      b.addEventListener("click", function(){
+        formPrice = b.dataset.price;
+        panelBody.querySelectorAll("[data-price]").forEach(function(x){
+          x.classList.toggle("is-active", x === b);
+        });
+      });
+    });
+    document.getElementById("sUseLoc").addEventListener("click", function(){
+      var btn = this; btn.textContent = "กำลังหา…";
+      resolveLocation(function(loc){
+        formLoc = {lat:loc.lat, lng:loc.lng};
+        document.getElementById("sLoc").textContent = loc.lat.toFixed(5) + ", " + loc.lng.toFixed(5);
+        btn.textContent = "ใช้ตำแหน่งปัจจุบัน";
+        showToast("ตั้งตำแหน่งร้านเรียบร้อย");
+      });
+    });
+    var del = document.getElementById("sDel");
+    if(del) del.addEventListener("click", function(){
+      MY_SHOPS.splice(editIdx, 1); saveMyShops(); refreshMyShopsOnMap();
+      openPanel("merchant", "ร้านค้าของฉัน", true);
+      showToast("ลบร้านแล้ว");
+    });
+
+    document.getElementById("shopForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var ok = true;
+      ok = setErr("sName", val("sName").length >= 2 ? "" : "กรุณากรอกชื่อร้าน") && ok;
+      ok = setErr("sPhone", /^0\d{8,9}$/.test(val("sPhone").replace(/[-\s]/g, "")) ? "" : "กรุณากรอกเบอร์โทรให้ถูกต้อง") && ok;
+      ok = setErr("sAddr", val("sAddr").length >= 4 ? "" : "กรุณากรอกที่อยู่ร้าน") && ok;
+      if(!ok) return;
+
+      var closed = document.getElementById("sClosedNow").checked;
+      var shop = {
+        mine:true, brand:false,
+        name: val("sName"),
+        a: val("sAddr"),
+        cuisine: document.getElementById("sCui").value,
+        phone: val("sPhone"),
+        openAt: val("sOpen") || "10:00",
+        closeAt: val("sClose") || "21:00",
+        price: formPrice,
+        closed: closed,
+        lat: formLoc.lat, lng: formLoc.lng,
+        rating: 5.0, sold: 0, img: IMGS[0]
+      };
+      if(editIdx >= 0) MY_SHOPS[editIdx] = shop; else MY_SHOPS.push(shop);
+      saveMyShops();
+      refreshMyShopsOnMap();
+      openPanel("merchant", "ร้านค้าของฉัน", true);
+      showToast(editIdx >= 0 ? "บันทึกการแก้ไขแล้ว" : "เพิ่มร้าน “"+shop.name+"” ลงแผนที่แล้ว");
+    });
+  }
+
+  /* --- ปุ่มในหน้ารวมร้าน --- */
+  panelBody.addEventListener("click", function(e){
+    var v = e.target.closest("[data-mcview]");
+    if(v){
+      var s = MY_SHOPS[+v.dataset.mcview];
+      closePanel(); setNav(0);
+      openMapAt(s.lat, s.lng, s.name, s.a, s.cuisine);
+      return;
+    }
+    var ed = e.target.closest("[data-mcedit]");
+    if(ed){ openShopForm(+ed.dataset.mcedit); return; }
+    var dl = e.target.closest("[data-mcdel]");
+    if(dl){
+      var i2 = +dl.dataset.mcdel;
+      MY_SHOPS.splice(i2, 1); saveMyShops(); refreshMyShopsOnMap();
+      drawMerchant();
+      showToast("ลบร้านแล้ว");
+      return;
+    }
+  });
+
+  function refreshMyShopsOnMap(){
+    if(mapPopulated && USER) populate(USER);
   }
 
   /* --- บัญชี (เต็มหน้าจอ) — เริ่มต้นเป็น Guest --- */
@@ -1523,6 +1759,12 @@
       acctRow("addr", "ที่อยู่จัดส่ง", "", true)+
       acctRow("hist", "ประวัติการสั่งซื้อ", "", true)+
       acctRow("coup", "คูปองส่วนลด", "", true)+
+      '<div class="acct-sect">สำหรับร้านค้า</div>'+
+      '<div class="acct-row" data-merchant="1">'+MC_ICON.store+
+        '<div><div>สมัครเป็นร้านค้า</div>'+
+        '<div style="font-size:12px;color:var(--muted);font-weight:600">'+
+          (MY_SHOPS.length ? ("มีร้านของคุณ " + MY_SHOPS.length + " ร้าน") : "เพิ่มร้านของคุณลงบนแผนที่")+
+        '</div></div>'+SVG.chev+'</div>'+
       '<div class="acct-sect">ใช้ได้เลย</div>'+
       acctRow("bell", "การแจ้งเตือน", "เปิดอยู่")+
       acctRow("help", "ช่วยเหลือ / ติดต่อเรา", "");
@@ -1546,6 +1788,12 @@
       '<div class="acct-sect">สิทธิพิเศษ</div>'+
       acctRow("coup", "คูปองส่วนลด", u.coupons + " ใบพร้อมใช้")+
       acctRow("star", "แต้มสะสมอิ่มจัง", u.points.toLocaleString("th-TH") + " แต้ม")+
+      '<div class="acct-sect">สำหรับร้านค้า</div>'+
+      '<div class="acct-row" data-merchant="1">'+MC_ICON.store+
+        '<div><div>ร้านค้าของฉัน</div>'+
+        '<div style="font-size:12px;color:var(--muted);font-weight:600">'+
+          (MY_SHOPS.length ? (MY_SHOPS.length + " ร้านบนแผนที่") : "สมัครเป็นร้านค้า / เพิ่มร้าน")+
+        '</div></div>'+SVG.chev+'</div>'+
       '<div class="acct-sect">ตั้งค่า</div>'+
       acctRow("bell", "การแจ้งเตือน", "เปิดอยู่")+
       acctRow("help", "ช่วยเหลือ / ติดต่อเรา", "")+
@@ -1841,6 +2089,14 @@
       iconSize:[52,64], iconAnchor:[26,64], popupAnchor:[0,-58]
     });
   }
+  var PIN_MINE = '<svg viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg">'+
+    '<path d="M18 45C6 28 3 22 3 16A15 15 0 0 1 33 16C33 22 30 28 18 45Z" fill="#2563eb"/>'+
+    '<circle cx="18" cy="16" r="9.5" fill="#fff"/>'+
+    '<path d="M13 17.5 15.8 20l6-6.5" stroke="#2563eb" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function minePinIcon(){
+    return L.divIcon({ className:"", html:'<div class="lpin lpin--brand lpin--mine">'+PIN_MINE+'</div>',
+      iconSize:[34,44], iconAnchor:[17,44], popupAnchor:[0,-40] });
+  }
   function pinIcon(closed){
     return L.divIcon({ className:"", html:'<div class="lpin lpin--brand'+(closed ? " lpin--closed" : "")+'">'+(closed ? PIN_CLOSED : PIN)+'</div>',
       iconSize:[34,44], iconAnchor:[17,44], popupAnchor:[0,-40] });
@@ -1864,6 +2120,12 @@
   function populate(here){
     USER = here;
     SHOPS = buildShops(here);
+    MY_SHOPS.forEach(function(s){
+      var c = {};
+      for(var k in s) c[k] = s[k];
+      c.s = myShopStatus(s);
+      SHOPS.unshift(c);
+    });
     SHOPS.forEach(function(sp){ sp.dist = distKm(here, sp); });
 
     if(shopCluster) map.removeLayer(shopCluster);
@@ -1872,7 +2134,9 @@
       : L.layerGroup();
 
     SHOPS.forEach(function(sp, i){
-      var m = L.marker([sp.lat, sp.lng], {icon: pinIcon(sp.closed), opacity: sp.closed ? 0.92 : 1});
+      var m = L.marker([sp.lat, sp.lng],
+        {icon: sp.mine ? minePinIcon() : pinIcon(sp.closed), opacity: sp.closed ? 0.92 : 1,
+         zIndexOffset: sp.mine ? 800 : 0});
       m.on("click", function(){ selectShop(i, false); openShopSheet(i); });
       sp.marker = m;
       shopCluster.addLayer(m);
@@ -1900,7 +2164,9 @@
   }
   function clearFocusShop(){
     if(focusShopIdx < 0) return;
+    var was = focusShopIdx;
     focusShopIdx = -1;
+    if(was >= 0 && SHOPS[was] && SHOPS[was].__synthetic) SHOPS.splice(was, 1);
     if(searchMarker){ map.removeLayer(searchMarker); searchMarker = null; }
     branchCountEl.textContent = SHOPS.length + " ร้าน";
     rebuildList();
@@ -1911,7 +2177,8 @@
   function renderList(near){
     branchList.innerHTML = near.map(function(o, rank){
       var sp = o.sp;
-      var badge = o.focus ? '<span class="branch__badge">ร้านของเมนูนี้</span>'
+      var badge = sp.mine ? '<span class="branch__badge" style="background:#2563eb">ร้านของฉัน</span>'
+                : o.focus ? '<span class="branch__badge">ร้านของเมนูนี้</span>'
                 : rank === 0 ? '<span class="branch__badge">ใกล้ที่สุด</span>'
                 : sp.brand ? '<span class="branch__badge">อิ่มจัง</span>' : '';
       return '<article class="branch" data-i="'+o.i+'">'+
@@ -2209,6 +2476,7 @@
       img: IMGS[0],
       dist: USER ? distKm(USER, {lat:f.lat, lng:f.lng}) : 0
     };
+    sp.__synthetic = true;
     SHOPS.push(sp);
     focusShopIdx = SHOPS.length - 1;
 
