@@ -319,6 +319,7 @@
   #lmap .leaflet-popup-content{font-size:13px;line-height:1.55;margin:13px 15px}
   #lmap .leaflet-popup-content b{color:var(--green-700)}
   #lmap .leaflet-popup-content a{color:var(--green-600);font-weight:700}
+  .shop-photo{width:100%;height:100%;object-fit:cover;display:block}
   .lpin{position:relative;width:36px;height:46px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.3))}
   .lpin svg{width:36px;height:46px;display:block}
   .lpin--brand{width:34px;height:44px}
@@ -2079,7 +2080,15 @@
     "ร้านเบเกอรี่":["#f6efe4","#dcb98b","#a16207"],
     "อื่นๆ":["#e9f7ee","#86efac","#22c55e"]
   };
+  var CAT_IMG = {
+    "ร้านอาหารตามสั่ง":"assets/cat-tamsang.jpg",
+    "ร้านข้าวแกง":"assets/cat-khaokaeng.jpg",
+    "ร้านของหวาน":"assets/cat-dessert.jpg",
+    "ร้านเบเกอรี่":"assets/cat-bakery.jpg"
+  };
   function shopArt(sp){
+    var photo = CAT_IMG[sp && sp.cuisine];
+    if(photo) return '<img class="shop-photo" src="'+photo+'" alt="" loading="lazy">';
     var c = ART[sp.cuisine] || ["#e9f7ee","#86efac","#22c55e"];
     var id = "g" + Math.floor(Math.random() * 1e6);
     return '<svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">'+
