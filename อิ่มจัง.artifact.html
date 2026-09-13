@@ -707,6 +707,64 @@
   .bigcard .ss-rows{margin-top:12px}
   .bigcard .ss-row{padding:10px 0}
   .bigcard .ss-actions{margin-top:14px}
+  /* ---------- Rating / รีวิว ---------- */
+  :root{
+    --star-mask:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z'/%3E%3C/svg%3E");
+  }
+  .stars{display:inline-flex;gap:2px;vertical-align:-2px;flex:0 0 auto}
+  .star{position:relative;display:block;width:15px;height:15px;color:#dfe5e0}
+  .star::before,.star i::before{
+    content:"";position:absolute;inset:0;background:currentColor;
+    -webkit-mask:var(--star-mask) center/contain no-repeat;
+    mask:var(--star-mask) center/contain no-repeat;
+  }
+  .star i{position:absolute;inset:0;overflow:hidden;color:#f59e0b}
+  .star i::before{width:15px}
+  .stars--lg .star{width:21px;height:21px}
+  .stars--lg .star i::before{width:21px}
+
+  .rate-box{margin-top:14px;border-top:1px solid var(--line);padding-top:13px}
+  .rate-sum{display:flex;align-items:center;gap:12px}
+  .rate-sum .big{font-size:28px;font-weight:800;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
+  .rate-sum .meta{font-size:12px;color:var(--muted);font-weight:600;margin-top:4px}
+  .rate-sum .grow{flex:1;min-width:0}
+  .btn-rate{
+    flex:0 0 auto;height:40px;padding:0 15px;border-radius:12px;
+    background:var(--green-50);color:var(--green-700);font-size:13px;font-weight:800;
+  }
+  .btn-rate:active{background:var(--green-100)}
+
+  .picker{display:flex;gap:8px;margin:12px 0 10px}
+  .picker button{
+    width:40px;height:40px;display:grid;place-items:center;border-radius:11px;background:var(--bg);
+  }
+  .picker button .star{width:24px;height:24px}
+  .picker button .star i::before{width:24px}
+  .picker button:active{transform:scale(.92)}
+  .rate-form textarea{
+    width:100%;min-height:78px;border:1px solid var(--line);border-radius:13px;
+    padding:11px 13px;font-family:inherit;font-size:14px;line-height:1.55;
+    color:var(--ink);background:var(--surface);resize:vertical;
+  }
+  .rate-form textarea:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(34,197,94,.16)}
+  .rate-form .acts{display:flex;gap:9px;margin-top:10px}
+  .rate-form .acts .btn-wide{margin-top:0}
+  .rate-form[hidden]{display:none}
+
+  .review{display:flex;gap:11px;padding:12px 0;border-top:1px solid var(--line)}
+  .review__ava{
+    width:36px;height:36px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+    background:var(--green-50);color:var(--green-700);font-weight:800;font-size:14px;
+  }
+  .review__b{flex:1;min-width:0}
+  .review__h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .review__h b{font-size:13.5px}
+  .review__h time{font-size:11.5px;color:var(--muted);font-weight:600}
+  .review__t{font-size:13.5px;line-height:1.55;margin-top:4px}
+  .review__mine{font-size:10.5px;font-weight:800;color:var(--green-700);
+    background:var(--green-50);padding:2px 7px;border-radius:99px}
+  .review__del{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--danger)}
+  .rev-empty{font-size:13px;color:var(--muted);padding:12px 0 2px;line-height:1.55}
   /* ---------- Shop detail sheet ---------- */
   .shopsheet{position:fixed;inset:0;z-index:2500}
   .shopsheet[hidden]{display:none}
@@ -1005,6 +1063,11 @@
 (function(){
   "use strict";
 
+  /* ---- คลังรีวิว (โหลดก่อนเพราะหน้าแรกใช้ตอนวาดการ์ดเมนู) ---- */
+  var REV_KEY = "aroijang.reviews";
+  var REVIEWS = {};
+  try { REVIEWS = JSON.parse(localStorage.getItem(REV_KEY) || "{}") || {}; } catch(e){ REVIEWS = {}; }
+
   /* ---- Menu data ---- */
   var CAT = {rice:["#fef3c7","#fbbf24"], noodle:["#fee2e2","#f87171"], salad:["#dcfce7","#4ade80"]};
   function dish(cat){
@@ -1123,9 +1186,8 @@
           '</div>'+
           '<div class="card-body">'+
             '<div class="card-title">'+it.n+'</div>'+
-            '<div class="rating">'+
-              '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg>'+
-              it.r.toFixed(1)+' · ขายแล้ว '+it.s.toLocaleString("th-TH")+
+            '<div class="rating">'+ starsHtml(revScore(menuRevKey(i), it.r).avg) +
+              ' '+revScore(menuRevKey(i), it.r).avg.toFixed(1)+' · ขายแล้ว '+it.s.toLocaleString("th-TH")+
             '</div>'+
             '<div class="price-row">'+
               '<div class="price">฿'+it.p+' <small>/ จาน</small></div>'+
@@ -1931,6 +1993,144 @@
     });
   });
 
+  /* ---- ระบบเรทติ้ง / รีวิว ---- */
+  function saveReviews(){
+    try { localStorage.setItem(REV_KEY, JSON.stringify(REVIEWS)); } catch(e){}
+  }
+  function shopRevKey(sp){
+    return "shop:" + (sp.name || "") + "|" + Number(sp.lat).toFixed(4) + "," + Number(sp.lng).toFixed(4);
+  }
+  function menuRevKey(i){ return "menu:" + ITEMS[i].n; }
+  function revsOf(k){ return REVIEWS[k] || []; }
+  /* คะแนนที่แสดง = คะแนนตั้งต้น (ถ่วงน้ำหนัก 10 เสียง) ผสมกับรีวิวของผู้ใช้ */
+  function revScore(k, base){
+    var list = revsOf(k);
+    if(!list.length) return {avg: base, n: 0};
+    var sum = 0;
+    list.forEach(function(r){ sum += r.s; });
+    return {avg: (base * 10 + sum) / (10 + list.length), n: list.length};
+  }
+  function starsHtml(v, big){
+    var h = '<span class="stars'+(big ? " stars--lg" : "")+'" role="img" aria-label="'+
+            (Math.round(v*10)/10)+' จาก 5 ดาว">';
+    for(var i = 1; i <= 5; i++){
+      var pct = Math.max(0, Math.min(1, v - (i - 1))) * 100;
+      h += '<span class="star"><i style="width:'+pct.toFixed(0)+'%"></i></span>';
+    }
+    return h + '</span>';
+  }
+  function pickerHtml(cur){
+    var h = '<div class="picker" role="radiogroup" aria-label="ให้คะแนน 1 ถึง 5 ดาว">';
+    for(var i = 1; i <= 5; i++){
+      h += '<button type="button" data-star="'+i+'" role="radio" aria-checked="'+(i === cur)+'" '+
+           'aria-label="'+i+' ดาว"><span class="star"><i style="width:'+(i <= cur ? 100 : 0)+'%"></i></span></button>';
+    }
+    return h + '</div>';
+  }
+  function whenText(iso){
+    var d = new Date(iso), now = new Date();
+    var days = Math.floor((now - d) / 86400000);
+    if(days <= 0) return "วันนี้";
+    if(days === 1) return "เมื่อวาน";
+    if(days < 30) return days + " วันก่อน";
+    return d.toLocaleDateString("th-TH", {day:"numeric", month:"short"});
+  }
+  function reviewerName(){
+    return ACCOUNT ? ACCOUNT.name : "ผู้ใช้";
+  }
+
+  /* กล่องเรทติ้ง: สรุป + ปุ่มเขียนรีวิว + ฟอร์ม + รายการรีวิว */
+  function ratingBlock(key, base, label){
+    var sc = revScore(key, base);
+    var list = revsOf(key).slice().reverse();
+    return '<div class="rate-box" data-ratekey="'+key+'" data-base="'+base+'">'+
+      '<div class="rate-sum">'+
+        '<div><div class="big">'+sc.avg.toFixed(1)+'</div></div>'+
+        '<div class="grow">'+starsHtml(sc.avg)+
+          '<div class="meta">'+(sc.n ? ("รีวิวจากผู้ใช้ " + sc.n + " รายการ") : "ยังไม่มีรีวิวจากผู้ใช้")+'</div>'+
+        '</div>'+
+        '<button class="btn-rate" type="button" data-openrate>เขียนรีวิว</button>'+
+      '</div>'+
+      '<form class="rate-form" hidden>'+
+        pickerHtml(0)+
+        '<textarea class="rev-text" maxlength="300" placeholder="'+(label || "เล่าให้ฟังหน่อยว่าเป็นยังไงบ้าง")+'"></textarea>'+
+        '<div class="acts">'+
+          '<button class="btn-wide" type="submit">ส่งรีวิว</button>'+
+          '<button class="btn-rate" type="button" data-cancelrate>ยกเลิก</button>'+
+        '</div>'+
+      '</form>'+
+      (list.length
+        ? list.map(function(r, k){
+            return '<div class="review">'+
+              '<div class="review__ava">'+(r.who || "ผ").slice(0,1)+'</div>'+
+              '<div class="review__b">'+
+                '<div class="review__h"><b>'+(r.who || "ผู้ใช้")+'</b>'+starsHtml(r.s)+
+                  '<time>'+whenText(r.d)+'</time>'+
+                  (r.mine ? '<span class="review__mine">ของคุณ</span>'+
+                            '<button class="review__del" type="button" data-delrev="'+(list.length-1-k)+'">ลบ</button>' : '')+
+                '</div>'+
+                (r.t ? '<div class="review__t">'+r.t.replace(/</g,"&lt;")+'</div>' : '')+
+              '</div>'+
+            '</div>';
+          }).join("")
+        : '<div class="rev-empty">ยังไม่มีใครรีวิว — เป็นคนแรกที่ให้คะแนนได้เลย</div>');
+  }
+
+  /* ผูกอีเวนต์ให้กล่องเรทติ้งในคอนเทนเนอร์ที่ระบุ */
+  function wireRating(root, onChange){
+    var box = root.querySelector(".rate-box");
+    if(!box) return;
+    var key = box.dataset.ratekey, base = parseFloat(box.dataset.base) || 0;
+    var form = box.querySelector(".rate-form");
+    var picked = 0;
+
+    function redraw(){
+      box.outerHTML = ratingBlock(key, base, null);
+      wireRating(root, onChange);
+      if(onChange) onChange();
+    }
+
+    box.querySelector("[data-openrate]").addEventListener("click", function(){
+      if(!ACCOUNT){ showToast("กรุณาเข้าสู่ระบบก่อนเขียนรีวิว"); return; }
+      form.hidden = !form.hidden;
+      if(!form.hidden) box.querySelector(".rev-text").focus();
+    });
+    var cancel = box.querySelector("[data-cancelrate]");
+    if(cancel) cancel.addEventListener("click", function(){ form.hidden = true; });
+
+    box.querySelectorAll("[data-star]").forEach(function(b){
+      b.addEventListener("click", function(){
+        picked = +b.dataset.star;
+        box.querySelectorAll("[data-star]").forEach(function(x){
+          var on = +x.dataset.star <= picked;
+          x.querySelector(".star i").style.width = on ? "100%" : "0%";
+          x.setAttribute("aria-checked", String(+x.dataset.star === picked));
+        });
+      });
+    });
+
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      if(!picked){ showToast("เลือกจำนวนดาวก่อนนะ"); return; }
+      var txt = box.querySelector(".rev-text").value.trim();
+      if(!REVIEWS[key]) REVIEWS[key] = [];
+      REVIEWS[key].push({s:picked, t:txt, d:new Date().toISOString(), who:reviewerName(), mine:true});
+      saveReviews();
+      showToast("ขอบคุณสำหรับรีวิว " + picked + " ดาว!");
+      redraw();
+    });
+
+    box.querySelectorAll("[data-delrev]").forEach(function(b){
+      b.addEventListener("click", function(){
+        REVIEWS[key].splice(+b.dataset.delrev, 1);
+        if(!REVIEWS[key].length) delete REVIEWS[key];
+        saveReviews();
+        showToast("ลบรีวิวแล้ว");
+        redraw();
+      });
+    });
+  }
+
   /* ---- แผ่นรายละเอียดเมนู (สถานที่ + แผนที่เล็ก) ---- */
   var itemSheet = document.getElementById("itemSheet");
   var miniMap = null, miniMarker = null, curItem = -1, isQtyN = 1;
@@ -1966,8 +2166,9 @@
     document.getElementById("isCover").innerHTML = shopArt({cuisine: CUISINE_OF[it.c]});
     document.getElementById("isName").textContent = it.n;
     document.getElementById("isPrice").textContent = money(it.p);
+    var mKey = menuRevKey(i), mSc = revScore(mKey, it.r);
     document.getElementById("isMeta").innerHTML =
-      '<span class="rate">★ '+it.r.toFixed(1)+'</span>'+
+      '<span class="rate">'+starsHtml(mSc.avg)+' '+mSc.avg.toFixed(1)+'</span>'+
       '<span class="price">ขายแล้ว '+it.s.toLocaleString("th-TH")+'</span>'+
       '<span class="cuisine">ทำ '+info.t+'</span>'+
       (it.tag ? '<span class="dist">'+it.tag+'</span>' : "");
@@ -1976,7 +2177,9 @@
     var distTxt = USER ? (" · ห่าง " + fmtKm(distKm(USER, {lat:info.lat, lng:info.lng}))) : "";
     document.getElementById("isRows").innerHTML =
       row(ICO.dish, "ร้านที่ขาย", info.shop) +
-      row(ICO.pin, "ที่อยู่", info.addr + distTxt);
+      row(ICO.pin, "ที่อยู่", info.addr + distTxt) +
+      ratingBlock(mKey, it.r, "เมนูนี้อร่อยไหม? รีวิวให้คนอื่นหน่อย");
+    wireRating(document.getElementById("isRows"), function(){ renderGrid(); });
 
     var favBtn = document.getElementById("isFav");
     favBtn.classList.toggle("is-on", !!FAVS[i]);
@@ -2302,7 +2505,8 @@
           '<h3>'+ (sp.brand ? "อิ่มจัง · " : "") + sp.name + badge +'</h3>'+
           '<div class="addr">'+sp.a+'</div>'+
           '<div class="branch__meta">'+
-            '<span class="rate">★ '+sp.rating.toFixed(1)+'</span>'+
+            '<span class="rate">'+starsHtml(revScore(shopRevKey(sp), sp.rating).avg)+
+              ' '+revScore(shopRevKey(sp), sp.rating).avg.toFixed(1)+'</span>'+
             '<span class="dist">◉ '+fmtKm(sp.dist)+'</span>'+
             '<span class="'+(sp.closed ? "closed" : "open")+'">'+sp.s+'</span>'+
           '</div>'+
@@ -2379,7 +2583,9 @@
       '<div class="bigcard__body">'+
         '<h3>'+ (sp.brand ? "อิ่มจัง · " : "") + sp.name +'</h3>'+
         '<div class="ss-meta">'+
-          '<span class="rate">★ '+sp.rating.toFixed(1)+' ('+sp.sold.toLocaleString("th-TH")+')</span>'+
+          '<span class="rate">'+starsHtml(revScore(shopRevKey(sp), sp.rating).avg)+
+            ' '+revScore(shopRevKey(sp), sp.rating).avg.toFixed(1)+
+            ' ('+(sp.sold + revScore(shopRevKey(sp), sp.rating).n).toLocaleString("th-TH")+')</span>'+
           '<span class="dist">◉ ห่าง '+fmtKm(sp.dist)+'</span>'+
           '<span class="price">'+sp.price+'</span>'+
           '<span class="cuisine">'+sp.cuisine+'</span>'+
@@ -2448,8 +2654,10 @@
     var st = document.getElementById("ssStatus");
     st.textContent = sp.closed ? "ปิดอยู่" : "เปิดอยู่";
     st.className = "ss-status " + (sp.closed ? "closed" : "open");
+    var sKey = shopRevKey(sp), sSc = revScore(sKey, sp.rating);
     document.getElementById("ssMeta").innerHTML =
-      '<span class="rate">★ '+sp.rating.toFixed(1)+' ('+sp.sold.toLocaleString("th-TH")+')</span>'+
+      '<span class="rate">'+starsHtml(sSc.avg)+' '+sSc.avg.toFixed(1)+
+        ' ('+(sp.sold + sSc.n).toLocaleString("th-TH")+')</span>'+
       '<span class="dist">◉ ห่าง '+fmtKm(sp.dist)+'</span>'+
       '<span class="price">'+sp.price+'</span>'+
       '<span class="cuisine">'+sp.cuisine+'</span>';
@@ -2460,7 +2668,9 @@
           : "เปิดอยู่ · ปิด " + sp.closeAt + " น.") +
       row(ICO.phone, "เบอร์โทร", sp.phone) +
       row(ICO.dish, "ประเภทร้าน", sp.cuisine) +
-      row(ICO.car, "เส้นทางขับรถ", '<span id="ssRouteVal">กำลังคำนวณเส้นทาง…</span>');
+      row(ICO.car, "เส้นทางขับรถ", '<span id="ssRouteVal">กำลังคำนวณเส้นทาง…</span>') +
+      ratingBlock(sKey, sp.rating, "ร้านนี้เป็นยังไงบ้าง? บอกเพื่อน ๆ หน่อย");
+    wireRating(document.getElementById("ssRows"));
     document.getElementById("ssCall").href = "tel:" + tel;
     document.getElementById("ssMsg").href = "sms:" + tel;
     document.getElementById("ssNav").href =
