@@ -382,6 +382,41 @@
     display:grid;place-items:center;flex:0 0 auto;
   }
   .route-info button svg{width:14px;height:14px}
+
+  /* ---------- กำลังไปรับ: ป้ายสถานะ + หมุดคนขับเคลื่อนที่ ---------- */
+  .route-info{flex-wrap:wrap}
+  .track{
+    flex:1 0 100%;display:flex;align-items:center;gap:8px;
+    padding:6px 34px 2px 0;margin-top:-2px;
+  }
+  .track__txt{
+    font-size:11.5px;font-weight:700;color:var(--green-700);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;
+  }
+  .track__bar{
+    flex:0 0 74px;height:5px;border-radius:99px;background:var(--line);overflow:hidden;
+  }
+  .track__fill{
+    display:block;height:100%;width:0;border-radius:99px;background:var(--green-600);
+  }
+  .track[hidden]{display:none}
+
+  .rider{position:relative}
+  .rider__halo{
+    position:absolute;inset:-11px;border-radius:50%;background:rgba(22,163,74,.22);
+    animation:riderPulse 1.6s ease-out infinite;
+  }
+  .rider__dot{
+    position:relative;width:30px;height:30px;border-radius:50%;
+    background:var(--green-600);border:3px solid #fff;
+    box-shadow:0 3px 10px rgba(16,40,25,.35);
+    display:grid;place-items:center;color:#fff;
+  }
+  .rider__dot svg{width:17px;height:17px}
+  @keyframes riderPulse{
+    0%{transform:scale(.7);opacity:.85}
+    100%{transform:scale(1.5);opacity:0}
+  }
   .map-locate{
     position:absolute;right:12px;bottom:20px;z-index:1000;
     width:52px;height:52px;border-radius:50%;background:var(--green-600);
@@ -1059,6 +1094,10 @@
       <button type="button" id="routeClear" aria-label="ล้างเส้นทาง">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
+      <div class="track" id="trackRow" hidden>
+        <span class="track__txt" id="trackTxt"></span>
+        <span class="track__bar"><i class="track__fill" id="trackFill"></i></span>
+      </div>
     </div>
     <button class="map-locate" id="mapLocate" type="button" aria-label="ไปยังตำแหน่งของฉัน">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
@@ -2911,6 +2950,7 @@
   function clearRoute(){
     if(routeLayer){ map.removeLayer(routeLayer); routeLayer = null; }
     routeInfo.hidden = true;
+    stopRider();
   }
   function fmtDur(sec){
     var m = Math.max(1, Math.round(sec / 60));
@@ -2926,6 +2966,86 @@
     var bv = document.getElementById("bcRouteVal");
     if(bv) bv.textContent = txt;
   }
+  /* --- อนิเมชั่น "กำลังไปรับ" วิ่งตามเส้นทางจริง --- */
+  var rider = null, riderTrail = null, riderRAF = 0;
+  var trackRow  = document.getElementById("trackRow");
+  var trackTxt  = document.getElementById("trackTxt");
+  var trackFill = document.getElementById("trackFill");
+  var SLOW = window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  var RIDER_SVG =
+    '<div class="rider">'+
+      '<span class="rider__halo"></span>'+
+      '<span class="rider__dot">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" '+
+        'stroke-linecap="round" stroke-linejoin="round">'+
+        '<circle cx="5.5" cy="17.5" r="3"/><circle cx="18.5" cy="17.5" r="3"/>'+
+        '<path d="M5.5 17.5h6l4-9h-3M15.5 8.5h3l2 6"/></svg>'+
+      '</span>'+
+    '</div>';
+
+  function stopRider(){
+    if(riderRAF){ cancelAnimationFrame(riderRAF); riderRAF = 0; }
+    if(rider && map){ map.removeLayer(rider); }
+    if(riderTrail && map){ map.removeLayer(riderTrail); }
+    rider = riderTrail = null;
+    trackRow.hidden = true;
+    trackFill.style.width = "0";
+  }
+
+  /* จุดบนเส้นทางที่ระยะ d เมตรจากต้นทาง */
+  function pointAt(pts, cum, d){
+    for(var i = 1; i < cum.length; i++){
+      if(cum[i] >= d){
+        var seg = cum[i] - cum[i-1] || 1;
+        var f = (d - cum[i-1]) / seg;
+        return [pts[i-1][0] + (pts[i][0] - pts[i-1][0]) * f,
+                pts[i-1][1] + (pts[i][1] - pts[i-1][1]) * f];
+      }
+    }
+    return pts[pts.length - 1];
+  }
+
+  function startRider(pts, shopName){
+    stopRider();
+    if(!map || pts.length < 2) return;
+
+    var cum = [0];
+    for(var i = 1; i < pts.length; i++){
+      cum.push(cum[i-1] + distKm({lat:pts[i-1][0], lng:pts[i-1][1]},
+                                 {lat:pts[i][0],   lng:pts[i][1]}) * 1000);
+    }
+    var total = cum[cum.length - 1] || 1;
+
+    riderTrail = L.polyline([pts[0]], {color:"#15803d", weight:6, opacity:1}).addTo(map);
+    rider = L.marker(pts[0], {
+      icon: L.divIcon({className:"", html:RIDER_SVG, iconSize:[30,30], iconAnchor:[15,15]}),
+      zIndexOffset:1200, keyboard:false, interactive:false
+    }).addTo(map);
+
+    trackTxt.textContent = "กำลังไปรับที่ " + shopName;
+    trackRow.hidden = false;
+
+    if(SLOW){ trackFill.style.width = "100%"; return; }
+
+    var DUR = 5200, t0 = 0;
+    function frame(now){
+      if(!t0) t0 = now;
+      var f = ((now - t0) % DUR) / DUR;
+      var here = pointAt(pts, cum, f * total);
+
+      rider.setLatLng(here);
+      var upto = [];
+      for(var i = 0; i < pts.length && cum[i] <= f * total; i++) upto.push(pts[i]);
+      upto.push(here);
+      riderTrail.setLatLngs(upto);
+      trackFill.style.width = (f * 100).toFixed(1) + "%";
+
+      riderRAF = requestAnimationFrame(frame);
+    }
+    riderRAF = requestAnimationFrame(frame);
+  }
+
   function drawRoute(latlngs, dashed){
     if(routeLayer) map.removeLayer(routeLayer);
     routeLayer = L.featureGroup([
@@ -2944,6 +3064,7 @@
     var id = ++routeReq;
     var straight = [[USER.lat, USER.lng], [sp.lat, sp.lng]];
     drawRoute(straight, true);
+    startRider(straight, sp.name);
     setRouteInfo(sp.dist, sp.dist / 24 * 3600, true);   // ประมาณ 24 กม./ชม.
     var url = "https://router.project-osrm.org/route/v1/driving/" +
               USER.lng + "," + USER.lat + ";" + sp.lng + "," + sp.lat +
@@ -2954,6 +3075,7 @@
       if(!r0 || !r0.geometry) return;
       var pts = r0.geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
       drawRoute(pts, false);
+      startRider(pts, sp.name);
       setRouteInfo(r0.distance / 1000, r0.duration, false);
     }).catch(function(){});
   }
