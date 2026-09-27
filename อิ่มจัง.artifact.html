@@ -882,10 +882,18 @@
     .card-title{font-size:15px}
   }
   @media (min-width:1040px){
-    :root{--shell:100%}
+    :root{--shell:100%; --content:1360px}
     .shell{box-shadow:none}
-    /* content rows stay centered & readable while the shell fills the screen */
-    .banner,.section-head,.chips,.grid{max-width:1360px;margin-inline:auto}
+    /* ทุกแถวของเนื้อหาอยู่กึ่งกลางและเริ่มที่ขอบซ้ายเดียวกัน */
+    .banner,.section-head,.filterbar,.chips,.grid{
+      max-width:var(--content);margin-inline:auto;
+    }
+    .banner{padding-inline:16px}
+    /* แถบบนกินเต็มจอ แต่ของข้างในเรียงตรงกับเนื้อหาด้านล่าง */
+    .topbar{padding-inline:max(16px, calc((100% - var(--content)) / 2))}
+    /* ปุ่มตัวกรอง จำนวนเมนู และปุ่มล้าง อยู่เป็นกลุ่มเดียวกันทางซ้าย */
+    .filterbar{padding-top:4px}
+    .fresult{flex:0 1 auto;margin-right:2px}
     .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
     .mascot{width:190px;height:190px;top:-84px}
     .section-head > div{padding-right:210px}
