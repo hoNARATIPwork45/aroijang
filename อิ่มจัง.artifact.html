@@ -731,7 +731,15 @@
   .fbtn.on .fcount{background:rgba(255,255,255,.28)}
   .fbtn .fcount[hidden]{display:none}
   .fresult{font-size:12.5px;color:var(--muted);font-weight:700;flex:1;min-width:0}
-  .fclear{font-size:12.5px;font-weight:800;color:var(--danger);flex:0 0 auto}
+  .fclear{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+    font-family:inherit;font-size:13px;font-weight:800;line-height:1;
+    color:#fff;background:var(--danger);border:0;border-radius:999px;
+    padding:9px 14px 9px 11px;min-height:36px;cursor:pointer;
+    box-shadow:0 2px 8px rgba(220,38,38,.32);
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease}
+  .fclear svg{width:15px;height:15px;flex:none}
+  .fclear:hover{background:#b91c1c;box-shadow:0 3px 12px rgba(220,38,38,.42)}
+  .fclear:active{transform:scale(.95)}
   .fclear[hidden]{display:none}
 
   /* ---------- Filter panel ---------- */
@@ -933,7 +941,7 @@
       ตัวกรอง <span class="fcount" id="fCount" hidden>0</span>
     </button>
     <span class="fresult" id="fResult"></span>
-    <button class="fclear" type="button" id="fClear" hidden>ล้างตัวกรอง</button>
+    <button class="fclear" type="button" id="fClear" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>ล้างตัวกรอง</button>
   </div>
 
   <nav class="chips" id="chips" aria-label="ตัวกรองหมวดหมู่">
