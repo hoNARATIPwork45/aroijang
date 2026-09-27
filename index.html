@@ -1134,21 +1134,40 @@
     "อื่นๆ":["#e9f7ee","#86efac","#22c55e"]
   };
 
-  var MENU_IMG = {
-    rice:  "assets/cat-tamsang.jpg",
-    kaeng: "assets/cat-khaokaeng.jpg",
-    sweet: "assets/cat-dessert.jpg",
-    bake:  "assets/cat-bakery.jpg"
+  /* รูปจานอาหารเรียงตามลำดับเมนูใน ITEMS */
+  var MENU_PHOTO = [
+    "assets/m01.jpg","assets/m02.jpg","assets/m03.jpg","assets/m04.jpg","assets/m05.jpg",
+    "assets/m06.jpg","assets/m07.jpg","assets/m08.jpg","assets/m09.jpg","assets/m10.jpg",
+    "assets/m11.jpg","assets/m12.jpg","assets/m13.jpg","assets/m14.jpg","assets/m15.jpg",
+    "assets/m16.jpg","assets/m17.jpg"
+  ];
+  /* รูปหน้าร้านของร้านที่มีชื่อจริงในระบบ */
+  var SHOP_PHOTO = {
+    "ร้านอาหารตามสั่ง เจ๊ติ๋ม":"assets/s-jetim.jpg",
+    "ครัวป้าแดง":"assets/s-padaeng.jpg",
+    "ครัวคุณต๋อย":"assets/s-toy.jpg",
+    "ข้าวหมูกรอบ เฮียเล้ง":"assets/s-moogrob.jpg",
+    "ข้าวแกง ป้าพร":"assets/s-khaokaeng.jpg",
+    "ส้มตำแม่ศรี":"assets/s-maesri.jpg",
+    "ตำ&สลัด บ้านสวน":"assets/s-bansuan.jpg",
+    "ของหวาน เจ๊นก":"assets/s-jenok.jpg",
+    "ของหวาน ป้าตุ๊ก":"assets/s-patook.jpg",
+    "อบอุ่นเบเกอรี่":"assets/s-obaun.jpg",
+    "เบเกอรี่บ้านคุณยาย":"assets/s-yai.jpg"
   };
-  function menuArt(it){
-    var src = MENU_IMG[it.c];
-    return src ? '<img class="shop-photo" src="'+src+'" alt="" loading="lazy">' : dish(it.c);
+  function photoTag(src){
+    return '<img class="shop-photo" src="'+src+'" alt="" loading="lazy">';
+  }
+  function menuArt(it, i){
+    var src = MENU_PHOTO[i];
+    return src ? photoTag(src) : dish(it.c);
   }
   var CAT_IMG = {
     "ร้านอาหารตามสั่ง":"assets/cat-tamsang.jpg",
     "ร้านข้าวแกง":"assets/cat-khaokaeng.jpg",
     "ร้านของหวาน":"assets/cat-dessert.jpg",
-    "ร้านเบเกอรี่":"assets/cat-bakery.jpg"
+    "ร้านเบเกอรี่":"assets/cat-bakery.jpg",
+    "อื่นๆ":"assets/cat-other.jpg"
   };
 
   /* ---- คลังรีวิว (โหลดก่อนเพราะหน้าแรกใช้ตอนวาดการ์ดเมนู) ---- */
@@ -1347,7 +1366,7 @@
                 : it.tag === "ขายดี" ? '<span class="badge">ขายดี</span>' : "";
       html +=
         '<article class="card" data-i="'+i+'">'+
-          '<div class="card-media">'+ menuArt(it) + badge +
+          '<div class="card-media">'+ menuArt(it, i) + badge +
             '<button class="fav'+(FAVS[i] ? " is-on" : "")+'" aria-label="เพิ่ม '+it.n+' ในรายการโปรด" data-fav>'+
               '<svg viewBox="0 0 24 24" fill="'+(FAVS[i] ? "currentColor" : "none")+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6C19 16.5 12 21 12 21z"/></svg>'+
             '</button>'+
@@ -2471,7 +2490,7 @@
     var it = ITEMS[i], info = itemInfo(i);
     curItem = i; isQtyN = 1;
 
-    document.getElementById("isCover").innerHTML = menuArt(it);
+    document.getElementById("isCover").innerHTML = menuArt(it, i);
     document.getElementById("isName").textContent = it.n;
     document.getElementById("isPrice").textContent = money(it.p);
     var mKey = menuRevKey(i), mSc = revScore(mKey, it.r);
@@ -2578,8 +2597,10 @@
   var CUISINES = ["ร้านอาหารตามสั่ง","ร้านข้าวแกง","ร้านของหวาน","ร้านเบเกอรี่","อื่นๆ"];
   var PREFIXES = ["081","082","086","089","091","095","062","064"];
   function shopArt(sp){
+    var own = sp && SHOP_PHOTO[sp.name];
+    if(own) return photoTag(own);
     var photo = CAT_IMG[sp && sp.cuisine];
-    if(photo) return '<img class="shop-photo" src="'+photo+'" alt="" loading="lazy">';
+    if(photo) return photoTag(photo);
     var c = ART[sp.cuisine] || ["#e9f7ee","#86efac","#22c55e"];
     var id = "g" + Math.floor(Math.random() * 1e6);
     return '<svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">'+
