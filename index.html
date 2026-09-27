@@ -714,6 +714,53 @@
   .bigcard .ss-rows{margin-top:12px}
   .bigcard .ss-row{padding:10px 0}
   .bigcard .ss-actions{margin-top:14px}
+  /* ---------- Search filter bar ---------- */
+  .filterbar{
+    display:flex;align-items:center;gap:10px;padding:2px 16px 0;
+  }
+  .fbtn{
+    display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;
+    border-radius:99px;background:var(--surface);border:1px solid var(--line);
+    font-size:13px;font-weight:800;color:var(--green-700);flex:0 0 auto;
+  }
+  .fbtn svg{width:16px;height:16px}
+  .fbtn.on{background:var(--green-600);border-color:var(--green-600);color:#fff}
+  .fbtn .fcount{
+    min-width:19px;height:19px;border-radius:99px;background:var(--green-600);color:#fff;
+    font-size:11px;display:grid;place-items:center;padding:0 5px;
+  }
+  .fbtn.on .fcount{background:rgba(255,255,255,.28)}
+  .fbtn .fcount[hidden]{display:none}
+  .fresult{font-size:12.5px;color:var(--muted);font-weight:700;flex:1;min-width:0}
+  .fclear{font-size:12.5px;font-weight:800;color:var(--danger);flex:0 0 auto}
+  .fclear[hidden]{display:none}
+
+  /* ---------- Filter panel ---------- */
+  .fgroup{margin-bottom:18px}
+  .fgroup > h4{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:9px}
+  .fpills{display:flex;flex-wrap:wrap;gap:8px}
+  .fpill{
+    padding:9px 14px;border-radius:99px;border:1px solid var(--line);
+    background:var(--surface);font-size:13px;font-weight:700;color:var(--muted);
+  }
+  .fpill.on{background:var(--green-600);border-color:var(--green-600);color:#fff}
+  .fpill:active{transform:scale(.95)}
+  .prange{display:flex;align-items:center;gap:10px}
+  .prange .fld{flex:1;min-width:0}
+  .prange span{font-size:13px;color:var(--muted);font-weight:700;margin-top:18px}
+  .fld label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:5px}
+  .fld input{
+    width:100%;height:46px;border:1px solid var(--line);border-radius:12px;
+    padding:0 12px;font-size:15px;color:var(--ink);background:var(--bg);
+    font-variant-numeric:tabular-nums;
+  }
+  .fld input:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(34,197,94,.16);background:var(--surface)}
+  .empty-grid{
+    grid-column:1/-1;text-align:center;padding:30px 14px;
+  }
+  .empty-grid img{width:118px;margin:0 auto 8px}
+  .empty-grid b{display:block;font-size:15px;color:var(--green-700)}
+  .empty-grid span{display:block;font-size:13px;color:var(--muted);margin-top:4px}
   /* ---------- Rating / รีวิว ---------- */
   :root{
     --star-mask:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z'/%3E%3C/svg%3E");
@@ -855,7 +902,7 @@
     </button>
     <form class="search" role="search" onsubmit="return false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="search" placeholder="ค้นหาเมนู ร้านอาหาร..." aria-label="ค้นหา">
+      <input type="search" id="menuSearch" placeholder="ค้นหาเมนู เช่น กะเพรา, ยำ" aria-label="ค้นหาเมนู" autocomplete="off">
     </form>
     <button class="icon-btn" id="btnMap" aria-label="ดูแผนที่ร้าน">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -866,7 +913,6 @@
   <section class="banner" aria-label="โปรโมชั่นแนะนำ">
     <div class="banner-track" id="bannerTrack">
       <div class="banner-slide"><img src="assets/banner-1.png" alt="อาหารตามสั่ง กะเพราแท้ รสจัดจ้าน เริ่มต้น 50 บาท"></div>
-      <div class="banner-slide"><img src="assets/banner-2.png" alt="ตรอกอาหารคลาสสิก รวมร้านตามสั่ง ข้าวแกง ของหวาน และเบเกอรี่"></div>
       <div class="banner-slide"><img src="assets/banner-3.png" alt="ผักสด ฟาร์มผักออร์แกนิก จากธรรมชาติสู่มือคุณ"></div>
     </div>
     <div class="dots" id="dots" aria-hidden="true"></div>
@@ -882,6 +928,15 @@
   </div>
 
   <!-- Filter chips -->
+  <div class="filterbar">
+    <button class="fbtn" type="button" id="btnFilter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      ตัวกรอง <span class="fcount" id="fCount" hidden>0</span>
+    </button>
+    <span class="fresult" id="fResult"></span>
+    <button class="fclear" type="button" id="fClear" hidden>ล้างตัวกรอง</button>
+  </div>
+
   <nav class="chips" id="chips" aria-label="ตัวกรองหมวดหมู่">
     <button class="chip is-active">ทั้งหมด</button>
     <button class="chip">ยอดนิยม</button>
@@ -1144,6 +1199,51 @@
   ];
   var CUISINE_OF = {rice:"ร้านอาหารตามสั่ง", salad:"ร้านข้าวแกง"};
 
+  /* ---- ตัวกรองการค้นหา ---- */
+  var SEARCH = {q:"", min:null, max:null, cats:[], minRating:0, tags:[], sort:"rec"};
+  var SORTS = {
+    rec:      {label:"แนะนำ",            fn:null},
+    priceAsc: {label:"ราคาต่ำ → สูง",     fn:function(a,b){ return a.p - b.p; }},
+    priceDesc:{label:"ราคาสูง → ต่ำ",     fn:function(a,b){ return b.p - a.p; }},
+    rating:   {label:"คะแนนสูงสุด",       fn:function(a,b){ return b.__r - a.__r; }},
+    sold:     {label:"ขายดีที่สุด",       fn:function(a,b){ return b.s - a.s; }}
+  };
+  var CAT_LABEL = {rice:"ตามสั่ง / ข้าว", salad:"ยำ / สลัด"};
+  var PRICE_PRESETS = [
+    {label:"ไม่เกิน ฿60", min:null, max:60},
+    {label:"฿60 – ฿80",  min:60,  max:80},
+    {label:"฿80 ขึ้นไป",  min:80,  max:null}
+  ];
+
+  function activeFilterCount(){
+    var n = 0;
+    if(SEARCH.min !== null || SEARCH.max !== null) n++;
+    if(SEARCH.cats.length) n++;
+    if(SEARCH.minRating) n++;
+    if(SEARCH.tags.length) n++;
+    if(SEARCH.sort !== "rec") n++;
+    return n;
+  }
+  function clearFilters(){
+    SEARCH.min = SEARCH.max = null;
+    SEARCH.cats = []; SEARCH.tags = [];
+    SEARCH.minRating = 0; SEARCH.sort = "rec";
+  }
+  function matchesSearch(it, i){
+    var r = revScore(menuRevKey(i), it.r).avg;
+    if(SEARCH.q){
+      var q = SEARCH.q.toLowerCase();
+      var hay = (it.n + " " + (CAT_LABEL[it.c] || "") + " " + (it.tag || "")).toLowerCase();
+      if(hay.indexOf(q) === -1) return false;
+    }
+    if(SEARCH.min !== null && it.p < SEARCH.min) return false;
+    if(SEARCH.max !== null && it.p > SEARCH.max) return false;
+    if(SEARCH.cats.length && SEARCH.cats.indexOf(it.c) === -1) return false;
+    if(SEARCH.minRating && r < SEARCH.minRating) return false;
+    if(SEARCH.tags.length && SEARCH.tags.indexOf(it.tag) === -1) return false;
+    return true;
+  }
+
   var grid = document.getElementById("grid");
   var chips = document.getElementById("chips");
   var cc = document.getElementById("cartCount");
@@ -1186,8 +1286,18 @@
   function renderGrid(){
     var f = FILTERS[curFilter] || FILTERS.all;
     var html = "", shown = 0;
-    ITEMS.forEach(function(it, i){
-      if(!f.test(it)) return;
+
+    var list = ITEMS.map(function(it, i){ return {it:it, i:i}; })
+                    .filter(function(o){ return f.test(o.it) && matchesSearch(o.it, o.i); });
+    var srt = SORTS[SEARCH.sort];
+    if(srt && srt.fn){
+      list.forEach(function(o){ o.it.__r = revScore(menuRevKey(o.i), o.it.r).avg; });
+      list.sort(function(a,b){ return srt.fn(a.it, b.it); });
+    }
+    syncFilterBar(list.length);
+
+    list.forEach(function(o){
+      var it = o.it, i = o.i;
       shown++;
       var badge = it.tag === "ใหม่" ? '<span class="badge new">ใหม่</span>'
                 : it.tag === "ขายดี" ? '<span class="badge">ขายดี</span>' : "";
@@ -1228,7 +1338,9 @@
       }
     });
     if(!shown){
-      html = '<div class="ad-card" style="justify-content:center">ไม่มีเมนูในหมวดนี้</div>';
+      html = '<div class="empty-grid"><img src="assets/mascot-angry.png" alt="">'+
+        '<b>ไม่เจอเมนูที่ตรงเงื่อนไข</b>'+
+        '<span>ลองลดตัวกรอง หรือเปลี่ยนคำค้นหาดูนะ</span></div>';
     }
     grid.innerHTML = html;
   }
@@ -1263,6 +1375,41 @@
   chips.addEventListener("click", function(e){
     var chip = e.target.closest(".chip");
     if(chip) setFilter(chip.dataset.f);
+  });
+
+  /* ---- แถบตัวกรอง ---- */
+  var fCount  = document.getElementById("fCount");
+  var fResult = document.getElementById("fResult");
+  var fClear  = document.getElementById("fClear");
+  var btnFilter = document.getElementById("btnFilter");
+  var menuSearch = document.getElementById("menuSearch");
+
+  function syncFilterBar(n){
+    var c = activeFilterCount();
+    fCount.textContent = c;
+    fCount.hidden = !c;
+    btnFilter.classList.toggle("on", c > 0);
+    fResult.textContent = n + " เมนู" +
+      (SEARCH.q ? ' สำหรับ “' + SEARCH.q + '”' : "") +
+      (SEARCH.sort !== "rec" ? " · " + SORTS[SEARCH.sort].label : "");
+    fClear.hidden = !(c > 0 || SEARCH.q);
+  }
+  var searchT;
+  menuSearch.addEventListener("input", function(){
+    clearTimeout(searchT);
+    searchT = setTimeout(function(){
+      SEARCH.q = menuSearch.value.trim();
+      renderGrid();
+    }, 180);
+  });
+  fClear.addEventListener("click", function(){
+    clearFilters();
+    SEARCH.q = ""; menuSearch.value = "";
+    setFilter("all");
+    showToast("ล้างตัวกรองแล้ว");
+  });
+  btnFilter.addEventListener("click", function(){
+    openPanel("filter", "ตัวกรองการค้นหา", true);
   });
 
   renderGrid();
@@ -1356,6 +1503,7 @@
     if(panelView === "auth")  return drawAuth();
     if(panelView === "mcgate")   return drawMcGate();
     if(panelView === "mcsignup") return drawMcSignup();
+    if(panelView === "filter")   return drawFilterPanel();
     if(panelView === "merchant") return drawMerchant();
     if(panelView === "shopform") return drawShopForm(editIdx >= 0 ? MY_SHOPS[editIdx] : null);
   }
@@ -1393,6 +1541,30 @@
     if(unfav){ delete FAVS[+unfav.dataset.unfav]; renderGrid(); drawFavs(); return; }
     var addf = e.target.closest("[data-addfav]");
     if(addf){ addToCart(+addf.dataset.addfav); return; }
+    var fp = e.target.closest("[data-fprice]");
+    if(fp){
+      var pp = PRICE_PRESETS[+fp.dataset.fprice];
+      var same = SEARCH.min === pp.min && SEARCH.max === pp.max;
+      SEARCH.min = same ? null : pp.min;
+      SEARCH.max = same ? null : pp.max;
+      renderGrid(); drawFilterPanel(); return;
+    }
+    var fc = e.target.closest("[data-fcat]");
+    if(fc){
+      var c = fc.dataset.fcat, k = SEARCH.cats.indexOf(c);
+      if(k >= 0) SEARCH.cats.splice(k, 1); else SEARCH.cats.push(c);
+      renderGrid(); drawFilterPanel(); return;
+    }
+    var fr = e.target.closest("[data-frate]");
+    if(fr){ SEARCH.minRating = parseFloat(fr.dataset.frate); renderGrid(); drawFilterPanel(); return; }
+    var ft = e.target.closest("[data-ftag]");
+    if(ft){
+      var g = ft.dataset.ftag, j = SEARCH.tags.indexOf(g);
+      if(j >= 0) SEARCH.tags.splice(j, 1); else SEARCH.tags.push(g);
+      renderGrid(); drawFilterPanel(); return;
+    }
+    var fs = e.target.closest("[data-fsort]");
+    if(fs){ SEARCH.sort = fs.dataset.fsort; renderGrid(); drawFilterPanel(); return; }
     if(e.target.closest("[data-merchant]")){ openMerchantFlow(); return; }
     if(e.target.closest("[data-locked]")){ showToast("กรุณาเข้าสู่ระบบก่อนใช้งานเมนูนี้"); return; }
   });
@@ -1985,6 +2157,84 @@
       '<button class="btn-logout" type="button" id="logout">ออกจากระบบ</button>';
   }
 
+  /* ---- แผงตัวกรอง ---- */
+  function pillRow(items, isOn, attr){
+    return '<div class="fpills">' + items.map(function(o){
+      return '<button class="fpill'+(isOn(o.v) ? " on" : "")+'" type="button" '+attr+'="'+o.v+'">'+o.label+'</button>';
+    }).join("") + '</div>';
+  }
+  function drawFilterPanel(){
+    panelFoot.hidden = false;
+    var priceOn = function(v){
+      var pp = PRICE_PRESETS[+v];
+      return SEARCH.min === pp.min && SEARCH.max === pp.max;
+    };
+    panelBody.innerHTML =
+      '<div class="fgroup"><h4>ช่วงราคา</h4>'+
+        pillRow(PRICE_PRESETS.map(function(pp, k){ return {v:String(k), label:pp.label}; }), priceOn, "data-fprice")+
+        '<div class="prange" style="margin-top:11px">'+
+          '<div class="fld"><label for="fMin">ต่ำสุด (บาท)</label>'+
+            '<input id="fMin" type="number" min="0" step="5" inputmode="numeric" value="'+(SEARCH.min === null ? "" : SEARCH.min)+'" placeholder="0"></div>'+
+          '<span>–</span>'+
+          '<div class="fld"><label for="fMax">สูงสุด (บาท)</label>'+
+            '<input id="fMax" type="number" min="0" step="5" inputmode="numeric" value="'+(SEARCH.max === null ? "" : SEARCH.max)+'" placeholder="ไม่จำกัด"></div>'+
+        '</div>'+
+      '</div>'+
+
+      '<div class="fgroup"><h4>ประเภทอาหาร</h4>'+
+        pillRow(Object.keys(CAT_LABEL).map(function(c){ return {v:c, label:CAT_LABEL[c]}; }),
+                function(v){ return SEARCH.cats.indexOf(v) >= 0; }, "data-fcat")+
+      '</div>'+
+
+      '<div class="fgroup"><h4>คะแนนขั้นต่ำ</h4>'+
+        pillRow([{v:"0",label:"ทั้งหมด"},{v:"4",label:"4.0 ★ ขึ้นไป"},
+                 {v:"4.5",label:"4.5 ★ ขึ้นไป"},{v:"4.8",label:"4.8 ★ ขึ้นไป"}],
+                function(v){ return SEARCH.minRating === parseFloat(v); }, "data-frate")+
+      '</div>'+
+
+      '<div class="fgroup"><h4>ป้ายกำกับ</h4>'+
+        pillRow([{v:"ขายดี",label:"ขายดี"},{v:"ใหม่",label:"เมนูใหม่"}],
+                function(v){ return SEARCH.tags.indexOf(v) >= 0; }, "data-ftag")+
+      '</div>'+
+
+      '<div class="fgroup"><h4>เรียงตาม</h4>'+
+        pillRow(Object.keys(SORTS).map(function(k){ return {v:k, label:SORTS[k].label}; }),
+                function(v){ return SEARCH.sort === v; }, "data-fsort")+
+      '</div>';
+
+    var n = ITEMS.filter(function(it, i){
+      return (FILTERS[curFilter] || FILTERS.all).test(it) && matchesSearch(it, i);
+    }).length;
+    panelFoot.innerHTML =
+      '<div style="display:flex;gap:10px">'+
+        '<button class="btn-rate" type="button" id="fReset" style="height:50px;padding:0 18px">ล้างทั้งหมด</button>'+
+        '<button class="btn-wide" type="button" id="fApply" style="margin-top:0;flex:1">ดูผลลัพธ์ · '+n+' เมนู</button>'+
+      '</div>';
+
+    document.getElementById("fReset").addEventListener("click", function(){
+      clearFilters(); renderGrid(); drawFilterPanel();
+    });
+    document.getElementById("fApply").addEventListener("click", function(){
+      closePanel(); setNav(0);
+      document.querySelector(".section-head").scrollIntoView({behavior:"smooth", block:"start"});
+    });
+    ["fMin","fMax"].forEach(function(id){
+      document.getElementById(id).addEventListener("input", function(){
+        var v = this.value === "" ? null : (parseFloat(this.value) || 0);
+        if(id === "fMin") SEARCH.min = v; else SEARCH.max = v;
+        renderGrid(); refreshFilterFoot();
+      });
+    });
+  }
+  function refreshFilterFoot(){
+    var btn = document.getElementById("fApply");
+    if(!btn) return;
+    var n = ITEMS.filter(function(it, i){
+      return (FILTERS[curFilter] || FILTERS.all).test(it) && matchesSearch(it, i);
+    }).length;
+    btn.textContent = "ดูผลลัพธ์ · " + n + " เมนู";
+  }
+
   /* ---- Bottom nav ---- */
   var navBtns = Array.prototype.slice.call(document.querySelectorAll(".bottomnav .navitem"));
   function setNav(idx){
@@ -2260,7 +2510,7 @@
   ];
   var ROADS   = ["ถ.สุขุมวิท","ถ.เพชรเกษม","ถ.พหลโยธิน","ถ.รัชดาภิเษก","ถ.ลาดพร้าว","ถ.นิมมานเหมินท์","ถ.มิตรภาพ","ถ.รอบเมือง","ถ.ประชาราษฎร์","ซ.อารีย์"];
   var CLOSES  = ["20:00","20:30","21:00","21:30","22:00","23:00"];
-  var IMGS    = ["assets/banner-1.png","assets/banner-2.png","assets/banner-3.png"];
+  var IMGS    = ["assets/banner-1.png","assets/banner-3.png"];
   var DISHES  = ["ข้าวมันไก่","ข้าวแกง","ข้าวราดแกง","อาหารตามสั่ง","ข้าวหมูแดง","ข้าวขาหมู","ข้าวไข่เจียว","โจ๊ก","ข้าวต้ม","ไก่ทอด","ขนมหวาน","บัวลอย","ไอศกรีม","เค้ก","ครัวซองต์","ขนมปัง"];
   var OWNERS  = ["ป้าแดง","เจ๊หมวย","ลุงหนวด","แม่ศรี","พี่ต้อม","เฮียเล้ง","น้านิด","ยายมล","เจ๊โอ๋","ป้าตุ๊ก","ครัวคุณต๋อย","บ้านสวน"];
   var PREFIX  = ["ครัว","ร้าน","โภชนา","เรือนไทย","ครัวคุณ","เบเกอรี่"];
