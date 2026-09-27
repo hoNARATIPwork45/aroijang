@@ -2750,7 +2750,7 @@
   var NAV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 19-9-9 19-2-8-8-2Z"/></svg>';
 
   /* --- Leaflet map (lazy init on first open) --- */
-  var map = null, userMarker = null, searchMarker = null, tileLayer = null;
+  var map = null, userMarker = null, userRing = null, searchMarker = null, tileLayer = null;
   var shopCluster = null, SHOPS = [], USER = null, mapPopulated = false;
   var hasL = (typeof L !== "undefined");
   var hasCluster = hasL && typeof L.markerClusterGroup === "function";
@@ -3068,11 +3068,34 @@
   });
 
   /* --- ตำแหน่งของเรา: GPS จริง ถ้าไม่ได้ใช้ตำแหน่งจำลองสุ่ม --- */
+  var NEAR_M = 500;   /* รัศมี "ใกล้ฉัน" 500 เมตร */
+
+  function nearbyCount(loc){
+    var n = 0;
+    for(var i = 0; i < SHOPS.length; i++){
+      if(distKm(loc, SHOPS[i]) * 1000 <= NEAR_M) n++;
+    }
+    return n;
+  }
+
   function markUser(loc, label){
     var ll = [loc.lat, loc.lng];
+
+    /* วงกลมรัศมี 500 ม. รอบตัวเรา */
+    if(userRing) userRing.setLatLng(ll);
+    else {
+      userRing = L.circle(ll, {
+        radius:NEAR_M, color:"#2563eb", weight:2, opacity:.85,
+        fillColor:"#2563eb", fillOpacity:.12, interactive:false
+      }).addTo(map);
+    }
+
     if(userMarker) userMarker.setLatLng(ll);
     else userMarker = L.marker(ll, {icon:dotIcon("lme", 18), keyboard:false, zIndexOffset:1000}).addTo(map);
-    userMarker.bindPopup(label);
+
+    var n = nearbyCount(loc);
+    userMarker.bindPopup(label +
+      '<br><b style="color:#2563eb">ในรัศมี 500 ม. มี ' + n + ' ร้าน</b>');
   }
   function resolveLocation(cb){
     var done = false;
@@ -3089,8 +3112,8 @@
     {enableHighAccuracy:true, timeout:6500, maximumAge:60000});
   }
   function goToMe(loc, real){
+    populate(loc);   /* ต้องมีร้านก่อน ถึงจะนับร้านในรัศมี 500 ม. ได้ */
     markUser(loc, real ? "คุณอยู่ที่นี่" : "ตำแหน่งจำลอง (เดโม)");
-    populate(loc);
     map.setView([loc.lat, loc.lng], 15, {animate:true});
     if(!real) showToast("ใช้ตำแหน่งจำลองแบบสุ่ม");
     if(pendingFocus) setTimeout(applyPendingFocus, 60);
