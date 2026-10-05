@@ -193,8 +193,22 @@
   .rating{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
   .rating svg{width:13px;height:13px;color:var(--amber)}
   .price-row{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:6px}
-  .price{font-size:16px;font-weight:800;color:var(--green-700)}
+  .price{font-size:18px;font-weight:900;color:var(--danger);letter-spacing:-.3px}
   .price small{font-size:11px;font-weight:500;color:var(--muted)}
+  .price-was{
+    display:block;font-size:11.5px;font-weight:700;color:var(--muted);
+    text-decoration:line-through;line-height:1.1;margin-bottom:1px;
+  }
+  .card-off{
+    position:absolute;left:8px;bottom:8px;z-index:2;
+    font-size:11px;font-weight:900;color:#fff;background:var(--danger);
+    border-radius:7px;padding:4px 7px;line-height:1;
+    box-shadow:0 2px 8px rgba(220,38,38,.38);
+  }
+  .is-price-was{
+    font-size:14px;font-weight:700;color:var(--muted);
+    text-decoration:line-through;margin-right:7px;
+  }
   .add{
     width:38px;height:38px;border-radius:12px;background:var(--green-600);
     color:#fff;display:grid;place-items:center;flex:0 0 auto;
@@ -739,7 +753,7 @@
   .acct-row:active{background:var(--green-50)}
 
   /* ---------- Item detail sheet ---------- */
-  .is-price{flex:0 0 auto;font-size:19px;font-weight:800;color:var(--green-700);white-space:nowrap}
+  .is-price{flex:0 0 auto;font-size:21px;font-weight:900;color:var(--danger);white-space:nowrap}
   .is-desc{font-size:13.5px;line-height:1.65;color:var(--muted);margin-top:12px}
   .ing-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
   .ing-list li{display:flex;align-items:center;gap:6px;list-style:none;
@@ -1310,26 +1324,27 @@
   }
 
   var ITEMS = [
-    {n:"ข้าวกะเพราหมูสับไข่ดาว", c:"rice",   p:60, r:4.9, s:1200, tag:"ขายดี"},
-    {n:"ข้าวผัดอเมริกัน",        c:"rice",   p:60, r:4.7, s:860,  tag:""},
-    {n:"สลัดอกไก่ออร์แกนิก",     c:"salad",  p:65, r:4.8, s:540,  tag:"ใหม่"},
-    {n:"ข้าวผัดกะเพราไก่ทอด",    c:"rice",   p:60, r:4.8, s:990,  tag:""},
-    {n:"ตำไทยไข่เค็ม",           c:"salad",  p:55, r:4.9, s:1320, tag:"ขายดี"},
-    {n:"ข้าวหมูกรอบคั่วพริกเกลือ",c:"rice",  p:65, r:4.6, s:430,  tag:""},
-    {n:"ยำวุ้นเส้นรวมมิตร",      c:"salad",  p:65, r:4.8, s:700,  tag:"ใหม่"},
-    {n:"ข้าวไข่ข้นกุ้ง",         c:"rice",   p:65, r:4.9, s:1010, tag:"ขายดี"},
-    {n:"ไอศกรีมกะทิสด",          c:"sweet",  p:25, r:4.7, s:1540, tag:"ขายดี"},
-    {n:"ขนมปังสังขยาใบเตย",      c:"bake",   p:30, r:4.6, s:820,  tag:""},
-    {n:"บัวลอยน้ำขิง",           c:"sweet",  p:30, r:4.8, s:960,  tag:""},
-    {n:"ข้าวไข่เจียวหมูสับ",      c:"rice",   p:35, r:4.7, s:2100, tag:"ขายดี"},
-    {n:"ครัวซองต์เนยสด",         c:"bake",   p:35, r:4.9, s:640,  tag:"ใหม่"},
-    {n:"ส้มตำไทยจานเล็ก",        c:"salad",  p:35, r:4.6, s:1180, tag:""},
-    {n:"ข้าวราดแกงเขียวหวาน",    c:"kaeng",  p:40, r:4.8, s:1460, tag:"ขายดี"},
-    {n:"ข้าวเหนียวมะม่วง",       c:"sweet",  p:40, r:4.9, s:1320, tag:"ใหม่"},
-    {n:"ข้าวราดแกง 2 อย่าง",     c:"kaeng",  p:45, r:4.7, s:1890, tag:""},
-    {n:"น้ำพริกกะปิผักต้ม",       c:"nampik", p:25, r:4.8, s:1240, tag:"ขายดี"},
-    {n:"น้ำพริกอ่องผักสด",        c:"nampik", p:25, r:4.7, s:680,  tag:""},
-    {n:"น้ำพริกปลาร้าผักลวก",     c:"nampik", p:25, r:4.9, s:910,  tag:"ใหม่"}
+    {n:"ข้าวกะเพราหมูสับไข่ดาว", c:"rice",   p:60, r:4.9, s:1200, tag:"ขายดี", o:40},
+    {n:"ข้าวผัดอเมริกัน",        c:"rice",   p:60, r:4.7, s:860,  tag:"", o:35},
+    {n:"สลัดอกไก่ออร์แกนิก",     c:"salad",  p:65, r:4.8, s:540,  tag:"ใหม่", o:45},
+    {n:"ข้าวผัดกะเพราไก่ทอด",    c:"rice",   p:60, r:4.8, s:990,  tag:"", o:40},
+    {n:"ตำไทยไข่เค็ม",           c:"salad",  p:55, r:4.9, s:1320, tag:"ขายดี", o:50},
+    {n:"ข้าวหมูกรอบคั่วพริกเกลือ",c:"rice",  p:65, r:4.6, s:430,  tag:"", o:35},
+    {n:"ยำวุ้นเส้นรวมมิตร",      c:"salad",  p:65, r:4.8, s:700,  tag:"ใหม่", o:45},
+    {n:"ข้าวไข่ข้นกุ้ง",         c:"rice",   p:65, r:4.9, s:1010, tag:"ขายดี", o:30},
+    {n:"ไอศกรีมกะทิสด",          c:"sweet",  p:25, r:4.7, s:1540, tag:"ขายดี", o:55},
+    {n:"ขนมปังสังขยาใบเตย",      c:"bake",   p:30, r:4.6, s:820,  tag:"", o:50},
+    {n:"บัวลอยน้ำขิง",           c:"sweet",  p:30, r:4.8, s:960,  tag:"", o:45},
+    {n:"ข้าวไข่เจียวหมูสับ",      c:"rice",   p:35, r:4.7, s:2100, tag:"ขายดี", o:40},
+    {n:"ครัวซองต์เนยสด",         c:"bake",   p:35, r:4.9, s:640,  tag:"ใหม่", o:35},
+    {n:"ส้มตำไทยจานเล็ก",        c:"salad",  p:35, r:4.6, s:1180, tag:"", o:50},
+    {n:"ข้าวราดแกงเขียวหวาน",    c:"kaeng",  p:40, r:4.8, s:1460, tag:"ขายดี", o:40},
+    {n:"ข้าวเหนียวมะม่วง",       c:"sweet",  p:40, r:4.9, s:1320, tag:"ใหม่", o:35},
+    {n:"ข้าวราดแกง 2 อย่าง",     c:"kaeng",  p:45, r:4.7, s:1890, tag:"", o:45},
+    {n:"น้ำพริกกะปิผักต้ม",       c:"nampik", p:25, r:4.8, s:1240, tag:"ขายดี", o:50},
+    {n:"น้ำพริกอ่องผักสด",        c:"nampik", p:25, r:4.7, s:680,  tag:"", o:45},
+    {n:"น้ำพริกปลาร้าผักลวก",     c:"nampik", p:25, r:4.9, s:910,  tag:"ใหม่", o:55}
+  
   ];
 
   /* ---- state ---- */
@@ -1488,6 +1503,7 @@
       html +=
         '<article class="card" data-i="'+i+'">'+
           '<div class="card-media">'+ menuArt(it, i) + badge +
+            (it.o ? '<span class="card-off">ลด '+it.o+'%</span>' : '')+
             '<button class="fav'+(FAVS[i] ? " is-on" : "")+'" aria-label="เพิ่ม '+it.n+' ในรายการโปรด" data-fav>'+
               '<svg viewBox="0 0 24 24" fill="'+(FAVS[i] ? "currentColor" : "none")+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6C19 16.5 12 21 12 21z"/></svg>'+
             '</button>'+
@@ -1498,7 +1514,9 @@
               ' '+revScore(menuRevKey(i), it.r).avg.toFixed(1)+' · ขายแล้ว '+it.s.toLocaleString("th-TH")+
             '</div>'+
             '<div class="price-row">'+
-              '<div class="price">฿'+it.p+' <small>/ จาน</small></div>'+
+              '<div class="price">'+
+                (it.o ? '<span class="price-was">฿'+wasPrice(it)+'</span>' : '')+
+                '฿'+it.p+' <small>/ จาน</small></div>'+
               '<button class="add" aria-label="เพิ่ม '+it.n+' ลงตะกร้า" data-add>'+
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'+
               '</button>'+
@@ -1677,6 +1695,11 @@
   });
 
   function money(n){ return "\u0e3f" + n.toLocaleString("th-TH"); }
+  /* it.p คือราคาที่จ่ายจริง ส่วน was คือราคาเต็มก่อนลดของเหลือ */
+  function wasPrice(it){
+    if(!it.o) return 0;
+    return Math.round(it.p / (1 - it.o / 100) / 5) * 5;
+  }
   function lineArt(i){ return '<div class="line__art">'+dish(ITEMS[i].c)+'</div>'; }
 
   function drawPanel(){
@@ -2613,7 +2636,8 @@
 
     document.getElementById("isCover").innerHTML = menuArt(it, i);
     document.getElementById("isName").textContent = it.n;
-    document.getElementById("isPrice").textContent = money(it.p);
+    document.getElementById("isPrice").innerHTML =
+      (it.o ? '<span class="is-price-was">'+money(wasPrice(it))+'</span>' : '') + money(it.p);
     var mKey = menuRevKey(i), mSc = revScore(mKey, it.r);
     document.getElementById("isMeta").innerHTML =
       '<span class="rate">'+starsHtml(mSc.avg)+' '+mSc.avg.toFixed(1)+'</span>'+
