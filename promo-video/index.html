@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>อิ่มจัง Promo 30s</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #0d1f14; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  body.fit #stage { left: 50%; top: 50%; }
+  #hud { position: fixed; left: 8px; bottom: 6px; font: 12px/1.4 monospace; color: #9fe3b5; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./node_modules/three/build/three.module.js",
+  "three/addons/": "./node_modules/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="stage" width="1920" height="1080"></canvas>
+<div id="hud"></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+out/stills/
+out/frames/
+out/sheet_*.jpg
+out/timeline_*.jpg
+out/dbg_*
+out/draft*.mp4
+out/render_log.txt
+out/spectrogram.png
