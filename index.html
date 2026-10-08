@@ -1403,6 +1403,13 @@
   };
 
   /* ---- คลังรีวิว (โหลดก่อนเพราะหน้าแรกใช้ตอนวาดการ์ดเมนู) ---- */
+  /* ---------- ผู้ลงโฆษณา ---------- */
+  var AD_KEY = "aroijang.adv";
+  var ADV = null;        // บัญชีผู้ลงโฆษณา
+  var MY_ADS = [];       // โฆษณาที่จองไว้
+  try { ADV = JSON.parse(localStorage.getItem(AD_KEY) || "null"); } catch(e){ ADV = null; }
+  try { MY_ADS = JSON.parse(localStorage.getItem(AD_KEY + ".list") || "[]") || []; } catch(e){ MY_ADS = []; }
+
   var REV_KEY = "aroijang.reviews";
   var REVIEWS = {};
   try { REVIEWS = JSON.parse(localStorage.getItem(REV_KEY) || "{}") || {}; } catch(e){ REVIEWS = {}; }
@@ -1958,12 +1965,6 @@
   }
   function isMerchant(){ return !!(ACCOUNT && MERCHANT); }
 
-  /* ---------- ผู้ลงโฆษณา ---------- */
-  var AD_KEY = "aroijang.adv";
-  var ADV = null;        // บัญชีผู้ลงโฆษณา
-  var MY_ADS = [];       // โฆษณาที่จองไว้
-  try { ADV = JSON.parse(localStorage.getItem(AD_KEY) || "null"); } catch(e){ ADV = null; }
-  try { MY_ADS = JSON.parse(localStorage.getItem(AD_KEY + ".list") || "[]") || []; } catch(e){ MY_ADS = []; }
   function saveAdv(){
     try {
       if(ADV) localStorage.setItem(AD_KEY, JSON.stringify(ADV));
