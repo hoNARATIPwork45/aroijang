@@ -1966,26 +1966,23 @@
   function isAdv(){ return !!(ACCOUNT && ADV); }
 
   /* โซนและตำแหน่งที่ขายได้ — ราคาอิงจากแผนการตลาด */
+  /* โซนที่เลือกยิง — ไม่มีผลกับราคา ใช้เลือกว่าให้ใครเห็น */
   var AD_ZONES = [
-    {v:"khlong6",  label:"คลองหก",            price:900},
-    {v:"khlongl",  label:"คลองหลวง",          price:900},
-    {v:"both",     label:"ทั้งสองโซน",        price:1500}
+    {v:"khlong6",  label:"คลองหก",       note:"เฉพาะคนในคลองหก"},
+    {v:"khlongl",  label:"คลองหลวง",     note:"เฉพาะคนในคลองหลวง"},
+    {v:"both",     label:"ทั้งสองโซน",   note:"ยิงกว้างที่สุด"}
   ];
+  /* ราคาตามแผนขายตรง B2B */
   var AD_SLOTS = [
-    {v:"list", label:"ในรายการเมนู",      mul:1,   note:"ตำแหน่งมาตรฐาน"},
-    {v:"map",  label:"การ์ดบนแผนที่",      mul:1.3, note:"เห็นตอนคนกำลังหาร้าน"},
-    {v:"home", label:"แบนเนอร์หน้าแรก",    mul:1.8, note:"เห็นทุกคนที่เปิดเว็บ"}
+    {v:"small", label:"ป้ายเล็ก", price:699, note:"ในรายการเมนู"},
+    {v:"big",   label:"ป้ายใหญ่", price:999, note:"แบนเนอร์หน้าแรก เห็นทุกคนที่เปิดเว็บ"}
   ];
   var AD_BIZ = ["ร้านซักรีด","ร้านตัดผม/เสริมสวย","หอพัก/ห้องเช่า","ร้านซ่อมมอเตอร์ไซค์",
                 "คลินิก/ร้านยา","ร้านของชำ","ฟิตเนส/สนามกีฬา","อื่นๆ"];
 
   function adPrice(zone, slot, months){
-    var z = AD_ZONES.filter(function(x){ return x.v === zone; })[0] || AD_ZONES[0];
     var s = AD_SLOTS.filter(function(x){ return x.v === slot; })[0] || AD_SLOTS[0];
-    var per = Math.round(z.price * s.mul / 10) * 10;
-    var sum = per * months;
-    if(months >= 3) sum = Math.round(sum * 0.9 / 10) * 10;   // จอง 3 เดือนขึ้นไปลด 10%
-    return {per: per, sum: sum, saved: per * months - sum};
+    return {per: s.price, sum: s.price * months, saved: 0};
   }
   function zoneLabel(v){
     var z = AD_ZONES.filter(function(x){ return x.v === v; })[0];
@@ -2147,7 +2144,7 @@
   }
 
   /* ================= ผู้ลงโฆษณา ================= */
-  var adZone = "khlong6", adSlot = "list", adMonths = 1, adEdit = -1;
+  var adZone = "khlong6", adSlot = "small", adMonths = 1, adEdit = -1;
 
   function openAdFlow(){
     if(!ACCOUNT){ openPanel("adgate", "ลงโฆษณากับอิ่มจัง", true); return; }
@@ -2168,7 +2165,7 @@
       '<div class="acct-row"><div><div>1. สมัครบัญชีผู้ลงโฆษณา</div>'+
         '<div style="font-size:12px;color:var(--muted);font-weight:600">กรอกข้อมูลธุรกิจของคุณ</div></div></div>'+
       '<div class="acct-row"><div><div>2. เลือกโซนและตำแหน่ง</div>'+
-        '<div style="font-size:12px;color:var(--muted);font-weight:600">เริ่ม 900 บาท/เดือน</div></div></div>'+
+        '<div style="font-size:12px;color:var(--muted);font-weight:600">ป้ายเล็ก 699 · ป้ายใหญ่ 999 บาท/เดือน</div></div></div>'+
       '<div class="acct-row"><div><div>3. ใส่ข้อความแล้วดูตัวอย่าง</div>'+
         '<div style="font-size:12px;color:var(--muted);font-weight:600">เห็นหน้าตาโฆษณาก่อนยืนยัน</div></div></div>';
     document.getElementById("adGoLogin").addEventListener("click", function(){
@@ -2239,7 +2236,7 @@
       (!MY_ADS.length
         ? '<div class="gate" style="padding:26px 10px">'+MC_ICON.ads+
             '<b>ยังไม่มีแคมเปญ</b>'+
-            '<span>เลือกโซนและตำแหน่งที่อยากให้คนเห็น เริ่ม 900 บาท/เดือน</span>'+
+            '<span>ป้ายเล็ก 699 บาท/เดือน · ป้ายใหญ่ 999 บาท/เดือน</span>'+
           '</div>'
         : '<div class="acct-sect">แคมเปญของฉัน ('+MY_ADS.length+')</div>'+
           MY_ADS.map(function(a, k){
@@ -2274,7 +2271,7 @@
     adEdit = k;
     var a = (k >= 0) ? MY_ADS[k] : null;
     adZone = a ? a.zone : "khlong6";
-    adSlot = a ? a.slot : "list";
+    adSlot = a ? a.slot : "small";
     adMonths = a ? a.months : 1;
     openPanel("adform", (k >= 0) ? "แก้ไขโฆษณา" : "จองตำแหน่งโฆษณา", true);
   }
@@ -2286,25 +2283,25 @@
 
     panelBody.innerHTML =
       '<form id="adForm" novalidate>'+
-        '<div class="acct-sect">เลือกโซน</div>'+
+        '<div class="acct-sect">เลือกโซนที่อยากให้เห็น</div>'+
         '<div class="pick-col" id="adZones">'+AD_ZONES.map(function(z){
           return '<button type="button" class="pick'+(adZone === z.v ? " on" : "")+'" data-zone="'+z.v+'">'+
-            '<span class="pick__t">'+z.label+'</span>'+
-            '<span class="pick__p">'+money(z.price)+'/เดือน</span></button>';
+            '<span class="pick__t">'+z.label+'<i>'+z.note+'</i></span>'+
+            '</button>';
         }).join("")+'</div>'+
 
-        '<div class="acct-sect">ตำแหน่งที่แสดง</div>'+
+        '<div class="acct-sect">ขนาดป้าย</div>'+
         '<div class="pick-col" id="adSlots">'+AD_SLOTS.map(function(s){
           return '<button type="button" class="pick'+(adSlot === s.v ? " on" : "")+'" data-slot="'+s.v+'">'+
             '<span class="pick__t">'+s.label+'<i>'+s.note+'</i></span>'+
-            '<span class="pick__p">'+(s.mul === 1 ? "ราคาปกติ" : "+"+Math.round((s.mul-1)*100)+"%")+'</span></button>';
+            '<span class="pick__p">'+money(s.price)+'/เดือน</span></button>';
         }).join("")+'</div>'+
 
         '<div class="acct-sect">ระยะเวลา</div>'+
         '<div class="pill-pick" id="adMonths">'+[1,3,6].map(function(m){
           return '<button type="button" data-mon="'+m+'"'+(adMonths === m ? ' class="is-active"' : '')+'>'+m+' เดือน</button>';
         }).join("")+'</div>'+
-        '<p class="auth-note" style="margin:-4px 0 14px">จอง 3 เดือนขึ้นไป ลด 10%</p>'+
+        '<p class="auth-note" style="margin:-4px 0 14px">คิดเป็นรายเดือน ยกเลิกได้ทุกเดือน</p>'+
 
         '<div class="acct-sect">เนื้อหาโฆษณา</div>'+
         field("adTitle", "หัวข้อ *", "text", "เช่น ซักอบรีด ส่งถึงหอ", 'value="'+(a ? a.title.replace(/"/g,"&quot;") : "")+'"')+
@@ -2898,7 +2895,7 @@
         '<div style="font-size:12px;color:var(--muted);font-weight:600">'+
           (ADV
             ? (MY_ADS.length ? (MY_ADS.length + " แคมเปญ") : "ยังไม่มีแคมเปญ · จองได้เลย")
-            : "ธุรกิจท้องถิ่นรอบพื้นที่ เริ่ม 900 บาท/เดือน")+
+            : "ธุรกิจท้องถิ่นรอบพื้นที่ เริ่ม 699 บาท/เดือน")+
         '</div></div>'+SVG.chev+'</div>'+
       '<div class="acct-sect">ตั้งค่า</div>'+
       acctRow("bell", "การแจ้งเตือน", "เปิดอยู่")+
