@@ -3473,7 +3473,7 @@
     document.getElementById("ssRows").innerHTML =
       row(ICO.pin, "ที่อยู่", sp.a) +
       row(ICO.clock, "เวลาทำการ", sp.openAt + " – " + sp.closeAt + " น.") +
-      (sp.closed ? "" : row(ICO.clock, "ปิดร้านในอีก",
+      (sp.closed || minsToClose(sp) > 360 ? "" : row(ICO.clock, "ปิดร้านในอีก",
           '<b style="color:' + (minsToClose(sp) <= 60 ? 'var(--danger)' : 'var(--green-700)') + '">'
           + fmtLeft(minsToClose(sp)) + '</b>')) +
       (sp.mine && !inSale(sp) && !sp.closed && sp.saleFrom
