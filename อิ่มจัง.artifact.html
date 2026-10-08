@@ -2140,7 +2140,7 @@
       var n = r.querySelector(".mi-n").value.trim();
       var full = +r.querySelector(".mi-p").value || 0;
       var qty = +r.querySelector(".mi-q").value || 0;
-      if(n && full > 0) formItems.push({n: n, full: full, qty: qty});
+      if(n || full || qty) formItems.push({n: n, full: full, qty: qty});
     });
   }
 
@@ -2266,6 +2266,7 @@
 
       var closed = document.getElementById("sClosedNow").checked;
       readFormItems();
+      var items = formItems.filter(function(i){ return i.n && i.full > 0; });
       var shop = {
         mine:true, brand:false,
         name: val("sName"),
@@ -2278,7 +2279,7 @@
         closed: closed,
         saleFrom: val("sSaleFrom") || "18:00",
         saleOff: formOff,
-        items: formItems,
+        items: items,
         lat: formLoc.lat, lng: formLoc.lng,
         rating: 5.0, sold: 0, img: IMGS[0]
       };
