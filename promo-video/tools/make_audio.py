@@ -6,6 +6,7 @@ start and the file loops without a click.     python tools/make_audio.py
 """
 import json
 import os
+import sys
 
 import numpy as np
 from scipy.io import wavfile
@@ -405,34 +406,78 @@ def circ_conv(x, ir):
     return np.fft.irfft(X * H, n=N, axis=0)
 
 
+def limiter(x, ceiling=0.89, look_ms=5, release_ms=90):
+    """Look-ahead peak limiter, run circularly so the loop seam stays clean."""
+    from scipy.ndimage import minimum_filter1d, uniform_filter1d
+    look = int(SR * look_ms / 1000)
+    pad = int(SR * 0.5)
+    y = np.concatenate([x[-pad:], x])
+    g = np.minimum(1.0, ceiling / np.maximum(np.abs(y).max(axis=1), 1e-9))
+    g = minimum_filter1d(g, size=2 * look + 1)
+    rel = np.exp(-1.0 / (SR * release_ms / 1000))
+    out = np.empty_like(g)
+    cur = 1.0
+    for i in range(len(g)):
+        v = g[i]
+        cur = v if v < cur else v + (cur - v) * rel
+        out[i] = cur
+    out = uniform_filter1d(out, size=look)
+    return np.clip(y * out[:, None], -ceiling, ceiling)[pad:]
+
+
 def main():
+    # --song <wav>: use an external 30 s loop (already on the 128 BPM grid) as the
+    # music bed instead of the synthesized track; the sound effects stay.
+    song = sys.argv[sys.argv.index('--song') + 1] if '--song' in sys.argv else None
     with open(os.path.join(OUT, 'cues.json'), encoding='utf-8') as f:
         cues = json.load(f)
-    drums = Bus()
-    music = {'bass': Bus(), 'keys': Bus(), 'lead': Bus()}
     sfx = Bus()
-    kicks = []
-    build_music(drums, music, kicks)
+    tame = {'riser': 0.45, 'riser2': 0.45, 'crash': 0.6, 'slam': 0.8} if song else {}
+    # keep the sung brand line clear: effects under it play much quieter
+    vwin = None
+    if song and os.path.exists(os.path.join(ROOT, 'music', 'voice_new.json')):
+        vb = json.load(open(os.path.join(ROOT, 'music', 'voice_new.json')))['beat'] - 4  # song beat -> film beat
+        vwin = (vb - 0.3, vb + 3.4)
     for c in cues:
         typ = c['type']
         start = c['beat'] * BEAT
+        g = c['gain'] * tame.get(typ, 1.0)
+        if vwin and vwin[0] <= c['beat'] <= vwin[1]:
+            g *= 0.3
         if typ in RISERS:
-            sfx.add(sfx_riser(RISERS[typ]), start, 0.55 * c['gain'], c['pan'])
+            sfx.add(sfx_riser(RISERS[typ]), start, 0.55 * g, c['pan'])
         elif typ in SFX:
-            sfx.add(SFX[typ](), start, 0.6 * c['gain'], c['pan'])
-    duck = sidechain(kicks)
-    mus = music['bass'].b * 0.9 + music['keys'].b * 0.9 + music['lead'].b
-    mus = mus * duck
+            sfx.add(SFX[typ](), start, 0.6 * g, c['pan'])
     ir = reverb_ir()
-    wet = circ_conv(music['keys'].b * 0.6 + music['lead'].b * 0.8 + sfx.b * 0.25, ir) * 0.16
-    mix = drums.b * 0.85 + mus * 0.9 + sfx.b * 0.95 + wet
-    peak = np.abs(mix).max()
-    mix = mix / peak * 1.25
-    mix = np.tanh(mix) / np.tanh(1.25) * 0.89
+    if song:
+        _, s = wavfile.read(song)
+        bed = s.astype(np.float64) / 32768.0
+        assert bed.shape == (N, 2), bed.shape
+        wet = circ_conv(sfx.b * 0.25, ir) * 0.14
+        mix = bed * 0.85 + sfx.b * 0.7 + wet
+        name = 'soundtrack_song.wav'
+    else:
+        drums = Bus()
+        music = {'bass': Bus(), 'keys': Bus(), 'lead': Bus()}
+        kicks = []
+        build_music(drums, music, kicks)
+        duck = sidechain(kicks)
+        mus = music['bass'].b * 0.9 + music['keys'].b * 0.9 + music['lead'].b
+        mus = mus * duck
+        wet = circ_conv(music['keys'].b * 0.6 + music['lead'].b * 0.8 + sfx.b * 0.25, ir) * 0.16
+        mix = drums.b * 0.85 + mus * 0.9 + sfx.b * 0.95 + wet
+        name = 'soundtrack.wav'
+    if song:
+        mix = mix * 10 ** ((-15.0 - 20 * np.log10(np.sqrt((mix ** 2).mean()))) / 20)
+        mix = limiter(mix)
+    else:
+        peak = np.abs(mix).max()
+        mix = mix / peak * 1.25
+        mix = np.tanh(mix) / np.tanh(1.25) * 0.89
     rms = np.sqrt((mix ** 2).mean())
     print(f'peak {np.abs(mix).max():.3f}  rms {20 * np.log10(rms):.1f} dBFS  cues {len(cues)}')
-    wavfile.write(os.path.join(OUT, 'soundtrack.wav'), SR, (mix * 32767).astype(np.int16))
-    print('wrote out/soundtrack.wav', N / SR, 's')
+    wavfile.write(os.path.join(OUT, name), SR, (mix * 32767).astype(np.int16))
+    print(f'wrote out/{name}', N / SR, 's')
 
 
 if __name__ == '__main__':

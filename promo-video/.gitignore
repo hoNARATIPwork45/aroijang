@@ -6,3 +6,5 @@ out/dbg_*
 out/draft*.mp4
 out/render_log.txt
 out/spectrogram.png
+music/
+out/soundtrack_song.wav

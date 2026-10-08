@@ -511,6 +511,42 @@
     box-shadow:0 2px 6px rgba(220,38,38,.3);
   }
   /* ---------- นับถอยหลังก่อนร้านปิด ---------- */
+  /* ---------- ผู้ลงโฆษณา ---------- */
+  .pick-col{display:grid;gap:9px;margin-bottom:16px}
+  .pick{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    width:100%;padding:14px 16px;border-radius:14px;cursor:pointer;
+    background:var(--surface);border:1.5px solid var(--line);font-family:inherit;text-align:left;
+  }
+  .pick.on{border-color:var(--green-500);background:var(--green-50)}
+  .pick__t{font-size:14.5px;font-weight:700;color:var(--ink);line-height:1.3}
+  .pick__t i{display:block;font-style:normal;font-size:12px;font-weight:500;color:var(--muted);margin-top:2px}
+  .pick__p{font-size:13px;font-weight:800;color:var(--green-700);flex:none}
+  .pick.on .pick__p{color:var(--green-600)}
+
+  .ad-rule{
+    display:grid;gap:5px;margin:4px 0 14px;padding:13px 15px;
+    background:var(--green-50);border:1px solid var(--line);border-radius:12px;
+  }
+  .ad-rule b{font-size:13px;color:var(--green-700)}
+  .ad-rule span{font-size:12.5px;color:var(--muted);line-height:1.5}
+
+  .ad-prev{margin-bottom:16px}
+  .ad-sum{
+    background:var(--bg);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;margin-bottom:16px;
+  }
+  .ad-sum__row{
+    display:flex;justify-content:space-between;gap:14px;
+    font-size:13.5px;font-weight:600;color:var(--muted);padding:5px 0;
+  }
+  .ad-sum__row.save{color:var(--danger)}
+  .ad-sum__row.total{
+    border-top:1px dashed var(--line);margin-top:6px;padding-top:11px;
+    font-size:15px;color:var(--ink);align-items:baseline;
+  }
+  .ad-sum__row.total b{font-size:22px;font-weight:900;color:var(--green-700)}
+
   .mc-sale{
     display:inline-block;margin-top:5px;font-size:11.5px;font-weight:800;
     color:var(--muted);background:var(--bg);border:1px solid var(--line);
@@ -1598,12 +1634,12 @@
           '<div class="sticker-tile" aria-hidden="true">'+
             '<img src="assets/mascot-angry.png" alt="">'+
           '</div>'+
-          '<div class="ad-card">'+
+          '<div class="ad-card" data-adv="1" role="button" tabindex="0">'+
             '<img class="ad-logo" src="assets/logo.png" alt="">'+
             '<div>'+
               '<div class="lbl">โฆษณา · ADS</div>'+
-              '<div class="txt">ลงโฆษณาร้านของคุณกับอร่อยจัง</div>'+
-              '<div class="sub">เข้าถึงลูกค้าหิวโซใกล้ร้านคุณทันที</div>'+
+              '<div class="txt">'+(MY_ADS.length ? MY_ADS[0].title : "ลงโฆษณาร้านของคุณกับอร่อยจัง")+'</div>'+
+              '<div class="sub">'+(MY_ADS.length ? MY_ADS[0].text : "เข้าถึงลูกค้าหิวโซใกล้ร้านคุณทันที")+'</div>'+
             '</div>'+
           '</div>';
       }
@@ -1730,6 +1766,7 @@
   var panelView  = null;
 
   var SVG = {
+    ads:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M8 15l2.4-6 2.4 6M8.8 13h3.2M16 9v6"/></svg>',
     plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>',
@@ -1782,6 +1819,10 @@
     if(panelView === "filter")   return drawFilterPanel();
     if(panelView === "merchant") return drawMerchant();
     if(panelView === "shopform") return drawShopForm(editIdx >= 0 ? MY_SHOPS[editIdx] : null);
+    if(panelView === "adgate")   return drawAdGate();
+    if(panelView === "adsignup") return drawAdSignup();
+    if(panelView === "adhome")   return drawAdHome();
+    if(panelView === "adform")   return drawAdForm();
   }
 
   /* --- หมวดหมู่ --- */
@@ -1842,6 +1883,7 @@
     var fs = e.target.closest("[data-fsort]");
     if(fs){ SEARCH.sort = fs.dataset.fsort; renderGrid(); drawFilterPanel(); return; }
     if(e.target.closest("[data-merchant]")){ openMerchantFlow(); return; }
+    if(e.target.closest("[data-adv]")){ openAdFlow(); return; }
     if(e.target.closest("[data-locked]")){ showToast("กรุณาเข้าสู่ระบบก่อนใช้งานเมนูนี้"); return; }
   });
 
@@ -1915,6 +1957,51 @@
     } catch(e){}
   }
   function isMerchant(){ return !!(ACCOUNT && MERCHANT); }
+
+  /* ---------- ผู้ลงโฆษณา ---------- */
+  var AD_KEY = "aroijang.adv";
+  var ADV = null;        // บัญชีผู้ลงโฆษณา
+  var MY_ADS = [];       // โฆษณาที่จองไว้
+  try { ADV = JSON.parse(localStorage.getItem(AD_KEY) || "null"); } catch(e){ ADV = null; }
+  try { MY_ADS = JSON.parse(localStorage.getItem(AD_KEY + ".list") || "[]") || []; } catch(e){ MY_ADS = []; }
+  function saveAdv(){
+    try {
+      if(ADV) localStorage.setItem(AD_KEY, JSON.stringify(ADV));
+      localStorage.setItem(AD_KEY + ".list", JSON.stringify(MY_ADS));
+    } catch(e){}
+  }
+  function isAdv(){ return !!(ACCOUNT && ADV); }
+
+  /* โซนและตำแหน่งที่ขายได้ — ราคาอิงจากแผนการตลาด */
+  var AD_ZONES = [
+    {v:"khlong6",  label:"คลองหก",            price:900},
+    {v:"khlongl",  label:"คลองหลวง",          price:900},
+    {v:"both",     label:"ทั้งสองโซน",        price:1500}
+  ];
+  var AD_SLOTS = [
+    {v:"list", label:"ในรายการเมนู",      mul:1,   note:"ตำแหน่งมาตรฐาน"},
+    {v:"map",  label:"การ์ดบนแผนที่",      mul:1.3, note:"เห็นตอนคนกำลังหาร้าน"},
+    {v:"home", label:"แบนเนอร์หน้าแรก",    mul:1.8, note:"เห็นทุกคนที่เปิดเว็บ"}
+  ];
+  var AD_BIZ = ["ร้านซักรีด","ร้านตัดผม/เสริมสวย","หอพัก/ห้องเช่า","ร้านซ่อมมอเตอร์ไซค์",
+                "คลินิก/ร้านยา","ร้านของชำ","ฟิตเนส/สนามกีฬา","อื่นๆ"];
+
+  function adPrice(zone, slot, months){
+    var z = AD_ZONES.filter(function(x){ return x.v === zone; })[0] || AD_ZONES[0];
+    var s = AD_SLOTS.filter(function(x){ return x.v === slot; })[0] || AD_SLOTS[0];
+    var per = Math.round(z.price * s.mul / 10) * 10;
+    var sum = per * months;
+    if(months >= 3) sum = Math.round(sum * 0.9 / 10) * 10;   // จอง 3 เดือนขึ้นไปลด 10%
+    return {per: per, sum: sum, saved: per * months - sum};
+  }
+  function zoneLabel(v){
+    var z = AD_ZONES.filter(function(x){ return x.v === v; })[0];
+    return z ? z.label : v;
+  }
+  function slotLabel(v){
+    var s = AD_SLOTS.filter(function(x){ return x.v === v; })[0];
+    return s ? s.label : v;
+  }
   function saveMyShops(){
     try { localStorage.setItem(MY_KEY, JSON.stringify(MY_SHOPS)); } catch(e){}
   }
@@ -2062,6 +2149,245 @@
       saveMerchant();
       openPanel("merchant", "ร้านค้าของฉัน", true);
       showToast("สมัครบัญชีร้านค้าสำเร็จ! เพิ่มร้านของคุณได้เลย");
+    });
+  }
+
+  /* ================= ผู้ลงโฆษณา ================= */
+  var adZone = "khlong6", adSlot = "list", adMonths = 1, adEdit = -1;
+
+  function openAdFlow(){
+    if(!ACCOUNT){ openPanel("adgate", "ลงโฆษณากับอิ่มจัง", true); return; }
+    if(!ADV){ openPanel("adsignup", "สมัครผู้ลงโฆษณา", true); return; }
+    openPanel("adhome", "โฆษณาของฉัน", true);
+  }
+
+  /* --- ยังไม่เข้าสู่ระบบ --- */
+  function drawAdGate(){
+    panelFoot.hidden = true;
+    panelBody.innerHTML =
+      '<div class="gate">'+LOCK_SVG+
+        '<b>ต้องเข้าสู่ระบบก่อน</b>'+
+        '<span>การลงโฆษณาต้องมีบัญชีผู้ใช้ก่อน แล้วจึงสมัครบัญชีผู้ลงโฆษณา</span>'+
+      '</div>'+
+      '<button class="btn-wide" type="button" id="adGoLogin">'+ACCT_ICON.login+' เข้าสู่ระบบ / สมัครสมาชิก</button>'+
+      '<div class="acct-sect">ลงโฆษณายังไง</div>'+
+      '<div class="acct-row"><div><div>1. สมัครบัญชีผู้ลงโฆษณา</div>'+
+        '<div style="font-size:12px;color:var(--muted);font-weight:600">กรอกข้อมูลธุรกิจของคุณ</div></div></div>'+
+      '<div class="acct-row"><div><div>2. เลือกโซนและตำแหน่ง</div>'+
+        '<div style="font-size:12px;color:var(--muted);font-weight:600">เริ่ม 900 บาท/เดือน</div></div></div>'+
+      '<div class="acct-row"><div><div>3. ใส่ข้อความแล้วดูตัวอย่าง</div>'+
+        '<div style="font-size:12px;color:var(--muted);font-weight:600">เห็นหน้าตาโฆษณาก่อนยืนยัน</div></div></div>';
+    document.getElementById("adGoLogin").addEventListener("click", function(){
+      openPanel("auth", "เข้าสู่ระบบ", true);
+    });
+  }
+
+  /* --- สมัครบัญชีผู้ลงโฆษณา --- */
+  function drawAdSignup(){
+    panelFoot.hidden = true;
+    panelBody.innerHTML =
+      '<div class="mc-banner">'+MC_ICON.ads+
+        '<div><b>สมัครผู้ลงโฆษณา</b>'+
+        '<span>สำหรับธุรกิจท้องถิ่นรอบพื้นที่</span></div>'+
+      '</div>'+
+      '<form id="advForm" novalidate>'+
+        field("aName", "ชื่อธุรกิจ *", "text", "เช่น ร้านซักรีดคลองหก", 'value=""')+
+        field("aOwner", "ชื่อผู้ติดต่อ *", "text", "ชื่อ-นามสกุล", 'value="'+(ACCOUNT ? ACCOUNT.name : "")+'"')+
+        field("aPhone", "เบอร์โทร *", "tel", "08X-XXX-XXXX", 'inputmode="tel"')+
+        field("aEmail", "อีเมลติดต่อ *", "email", "biz@example.com", 'inputmode="email" value="'+(ACCOUNT ? ACCOUNT.email : "")+'"')+
+        '<div class="field"><label for="aBiz">ประเภทธุรกิจ</label><div class="wrap">'+
+          '<select id="aBiz">'+AD_BIZ.map(function(x){ return '<option>'+x+'</option>'; }).join("")+'</select>'+
+        '</div></div>'+
+        '<div class="ad-rule">'+
+          '<b>กติกาที่เราถือ</b>'+
+          '<span>· รับเฉพาะธุรกิจนอกหมวดอาหาร ร้านอาหารบนอิ่มจังซื้อโฆษณาไม่ได้</span>'+
+          '<span>· โฆษณาติดป้าย “โฆษณา” เสมอ แยกจากรายการร้านชัดเจน</span>'+
+          '<span>· การเรียงลำดับร้านมาจากระยะทางและเรตติ้งเท่านั้น ซื้อไม่ได้</span>'+
+        '</div>'+
+        '<div class="auth-row"><label class="check"><input type="checkbox" id="aTerms"> '+
+          'ฉันเป็นเจ้าของธุรกิจ/ผู้มีอำนาจ และยอมรับ<b style="color:var(--green-700)">กติกาผู้ลงโฆษณา</b></label></div>'+
+        '<button class="btn-wide" type="submit">สมัครผู้ลงโฆษณา</button>'+
+      '</form>'+
+      '<p class="auth-note">เดโม — ข้อมูลเก็บในเครื่องของคุณเท่านั้น</p>';
+
+    document.getElementById("advForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var ok = true;
+      ok = setErr("aName", val("aName").length >= 2 ? "" : "กรุณากรอกชื่อธุรกิจ") && ok;
+      ok = setErr("aOwner", val("aOwner").length >= 2 ? "" : "กรุณากรอกชื่อผู้ติดต่อ") && ok;
+      ok = setErr("aPhone", /^0\d{8,9}$/.test(val("aPhone").replace(/[-\s]/g, "")) ? "" : "กรุณากรอกเบอร์โทรให้ถูกต้อง") && ok;
+      ok = setErr("aEmail", /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val("aEmail")) ? "" : "กรุณากรอกอีเมลให้ถูกต้อง") && ok;
+      if(!document.getElementById("aTerms").checked){
+        showToast("กรุณายอมรับกติกาผู้ลงโฆษณาก่อน"); ok = false;
+      }
+      if(!ok) return;
+      ADV = {
+        biz: val("aName"), owner: val("aOwner"),
+        phone: val("aPhone"), email: val("aEmail"),
+        type: document.getElementById("aBiz").value,
+        since: new Date().toISOString().slice(0, 10)
+      };
+      saveAdv();
+      openPanel("adhome", "โฆษณาของฉัน", true);
+      showToast("สมัครผู้ลงโฆษณาสำเร็จ! จองตำแหน่งได้เลย");
+    });
+  }
+
+  /* --- รายการแคมเปญ --- */
+  function drawAdHome(){
+    panelFoot.hidden = true;
+    if(!isAdv()){ openAdFlow(); return; }
+    panelBody.innerHTML =
+      '<div class="mc-banner">'+MC_ICON.ads+
+        '<div><b>'+ADV.biz+'</b>'+
+        '<span>ผู้ลงโฆษณา · '+ADV.type+' · เปิดใช้ '+ADV.since+'</span></div>'+
+      '</div>'+
+      (!MY_ADS.length
+        ? '<div class="gate" style="padding:26px 10px">'+MC_ICON.ads+
+            '<b>ยังไม่มีแคมเปญ</b>'+
+            '<span>เลือกโซนและตำแหน่งที่อยากให้คนเห็น เริ่ม 900 บาท/เดือน</span>'+
+          '</div>'
+        : '<div class="acct-sect">แคมเปญของฉัน ('+MY_ADS.length+')</div>'+
+          MY_ADS.map(function(a, k){
+            return '<div class="mc-card">'+
+              '<div class="mc-card__info">'+
+                '<h4>'+a.title+'</h4>'+
+                '<div class="sub">'+zoneLabel(a.zone)+' · '+slotLabel(a.slot)+'<br>'+a.months+' เดือน · '+money(a.price)+'</div>'+
+                '<div class="st open">กำลังแสดงอยู่</div>'+
+              '</div>'+
+              '<div class="mc-acts">'+
+                '<button class="mc-mini" type="button" data-adedit="'+k+'" aria-label="แก้ไข">'+MC_ICON.edit+'</button>'+
+                '<button class="mc-mini del" type="button" data-addel="'+k+'" aria-label="ลบ">'+MC_ICON.trash+'</button>'+
+              '</div>'+
+            '</div>';
+          }).join(""))+
+      '<button class="btn-wide" type="button" id="adNew">'+MC_ICON.plus+' จองตำแหน่งโฆษณา</button>';
+
+    document.getElementById("adNew").addEventListener("click", function(){ openAdForm(-1); });
+    panelBody.addEventListener("click", function(e){
+      var ed = e.target.closest("[data-adedit]");
+      if(ed){ openAdForm(+ed.dataset.adedit); return; }
+      var dl = e.target.closest("[data-addel]");
+      if(dl){
+        MY_ADS.splice(+dl.dataset.addel, 1); saveAdv();
+        renderGrid(); drawAdHome(); showToast("ลบแคมเปญแล้ว");
+      }
+    });
+  }
+
+  function openAdForm(k){
+    if(!isAdv()){ openAdFlow(); return; }
+    adEdit = k;
+    var a = (k >= 0) ? MY_ADS[k] : null;
+    adZone = a ? a.zone : "khlong6";
+    adSlot = a ? a.slot : "list";
+    adMonths = a ? a.months : 1;
+    openPanel("adform", (k >= 0) ? "แก้ไขโฆษณา" : "จองตำแหน่งโฆษณา", true);
+  }
+
+  /* --- ฟอร์มจองโฆษณา --- */
+  function drawAdForm(){
+    panelFoot.hidden = true;
+    var a = (adEdit >= 0) ? MY_ADS[adEdit] : null;
+
+    panelBody.innerHTML =
+      '<form id="adForm" novalidate>'+
+        '<div class="acct-sect">เลือกโซน</div>'+
+        '<div class="pick-col" id="adZones">'+AD_ZONES.map(function(z){
+          return '<button type="button" class="pick'+(adZone === z.v ? " on" : "")+'" data-zone="'+z.v+'">'+
+            '<span class="pick__t">'+z.label+'</span>'+
+            '<span class="pick__p">'+money(z.price)+'/เดือน</span></button>';
+        }).join("")+'</div>'+
+
+        '<div class="acct-sect">ตำแหน่งที่แสดง</div>'+
+        '<div class="pick-col" id="adSlots">'+AD_SLOTS.map(function(s){
+          return '<button type="button" class="pick'+(adSlot === s.v ? " on" : "")+'" data-slot="'+s.v+'">'+
+            '<span class="pick__t">'+s.label+'<i>'+s.note+'</i></span>'+
+            '<span class="pick__p">'+(s.mul === 1 ? "ราคาปกติ" : "+"+Math.round((s.mul-1)*100)+"%")+'</span></button>';
+        }).join("")+'</div>'+
+
+        '<div class="acct-sect">ระยะเวลา</div>'+
+        '<div class="pill-pick" id="adMonths">'+[1,3,6].map(function(m){
+          return '<button type="button" data-mon="'+m+'"'+(adMonths === m ? ' class="is-active"' : '')+'>'+m+' เดือน</button>';
+        }).join("")+'</div>'+
+        '<p class="auth-note" style="margin:-4px 0 14px">จอง 3 เดือนขึ้นไป ลด 10%</p>'+
+
+        '<div class="acct-sect">เนื้อหาโฆษณา</div>'+
+        field("adTitle", "หัวข้อ *", "text", "เช่น ซักอบรีด ส่งถึงหอ", 'value="'+(a ? a.title.replace(/"/g,"&quot;") : "")+'"')+
+        field("adText", "คำอธิบายสั้น ๆ *", "text", "เช่น รับผ้าถึงที่ คืนภายใน 24 ชม.", 'value="'+(a ? a.text.replace(/"/g,"&quot;") : "")+'"')+
+        field("adTel", "เบอร์ติดต่อ *", "tel", "08X-XXX-XXXX", 'inputmode="tel" value="'+(a ? a.tel : (ADV ? ADV.phone : ""))+'"')+
+
+        '<div class="acct-sect">ตัวอย่างที่ลูกค้าจะเห็น</div>'+
+        '<div class="ad-prev" id="adPrev"></div>'+
+
+        '<div class="ad-sum" id="adSum"></div>'+
+        '<button class="btn-wide" type="submit">'+(adEdit >= 0 ? "บันทึกการแก้ไข" : "ยืนยันการจอง")+'</button>'+
+      '</form>'+
+      '<p class="auth-note">เดโม — ยังไม่มีการตัดเงินจริง</p>';
+
+    function refresh(){
+      var pr = adPrice(adZone, adSlot, adMonths);
+      document.getElementById("adSum").innerHTML =
+        '<div class="ad-sum__row"><span>'+zoneLabel(adZone)+' · '+slotLabel(adSlot)+'</span><span>'+money(pr.per)+'/เดือน</span></div>'+
+        '<div class="ad-sum__row"><span>ระยะเวลา</span><span>'+adMonths+' เดือน</span></div>'+
+        (pr.saved > 0 ? '<div class="ad-sum__row save"><span>ส่วนลดจองยาว</span><span>−'+money(pr.saved)+'</span></div>' : '')+
+        '<div class="ad-sum__row total"><span>รวมทั้งหมด</span><b>'+money(pr.sum)+'</b></div>';
+
+      var ti = val("adTitle") || "หัวข้อโฆษณาของคุณ";
+      var tx = val("adText") || "คำอธิบายสั้น ๆ จะขึ้นตรงนี้";
+      document.getElementById("adPrev").innerHTML =
+        '<div class="ad-card" style="margin:0">'+
+          '<img class="ad-logo" src="assets/logo.png" alt="">'+
+          '<div><div class="lbl">โฆษณา · ADS</div>'+
+          '<div class="txt">'+ti+'</div>'+
+          '<div class="sub">'+tx+'</div></div>'+
+        '</div>';
+    }
+
+    panelBody.querySelectorAll("[data-zone]").forEach(function(b){
+      b.addEventListener("click", function(){
+        adZone = b.dataset.zone;
+        panelBody.querySelectorAll("[data-zone]").forEach(function(x){ x.classList.toggle("on", x === b); });
+        refresh();
+      });
+    });
+    panelBody.querySelectorAll("[data-slot]").forEach(function(b){
+      b.addEventListener("click", function(){
+        adSlot = b.dataset.slot;
+        panelBody.querySelectorAll("[data-slot]").forEach(function(x){ x.classList.toggle("on", x === b); });
+        refresh();
+      });
+    });
+    panelBody.querySelectorAll("[data-mon]").forEach(function(b){
+      b.addEventListener("click", function(){
+        adMonths = +b.dataset.mon;
+        panelBody.querySelectorAll("[data-mon]").forEach(function(x){ x.classList.toggle("is-active", x === b); });
+        refresh();
+      });
+    });
+    ["adTitle","adText"].forEach(function(id){
+      document.getElementById(id).addEventListener("input", refresh);
+    });
+    refresh();
+
+    document.getElementById("adForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var ok = true;
+      ok = setErr("adTitle", val("adTitle").length >= 3 ? "" : "กรุณากรอกหัวข้อ") && ok;
+      ok = setErr("adText", val("adText").length >= 5 ? "" : "กรุณากรอกคำอธิบาย") && ok;
+      ok = setErr("adTel", /^0\d{8,9}$/.test(val("adTel").replace(/[-\s]/g, "")) ? "" : "กรุณากรอกเบอร์โทรให้ถูกต้อง") && ok;
+      if(!ok) return;
+      var pr = adPrice(adZone, adSlot, adMonths);
+      var item = {
+        title: val("adTitle"), text: val("adText"), tel: val("adTel"),
+        zone: adZone, slot: adSlot, months: adMonths, price: pr.sum,
+        since: new Date().toISOString().slice(0, 10)
+      };
+      if(adEdit >= 0) MY_ADS[adEdit] = item; else MY_ADS.push(item);
+      saveAdv();
+      renderGrid();
+      openPanel("adhome", "โฆษณาของฉัน", true);
+      showToast(adEdit >= 0 ? "บันทึกแล้ว" : "จองโฆษณาสำเร็จ! ดูได้ในหน้าแรก");
     });
   }
 
@@ -2567,6 +2893,14 @@
           (MERCHANT
             ? (MY_SHOPS.length ? (MY_SHOPS.length + " ร้านบนแผนที่") : "ยังไม่มีร้าน · เพิ่มร้านได้เลย")
             : "สำหรับแม่ค้า/เจ้าของร้านเท่านั้น")+
+        '</div></div>'+SVG.chev+'</div>'+
+      '<div class="acct-sect">สำหรับผู้ลงโฆษณา</div>'+
+      '<div class="acct-row" data-adv="1">'+MC_ICON.ads+
+        '<div><div>'+(ADV ? "โฆษณาของฉัน" : "ลงโฆษณากับอิ่มจัง")+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);font-weight:600">'+
+          (ADV
+            ? (MY_ADS.length ? (MY_ADS.length + " แคมเปญ") : "ยังไม่มีแคมเปญ · จองได้เลย")
+            : "ธุรกิจท้องถิ่นรอบพื้นที่ เริ่ม 900 บาท/เดือน")+
         '</div></div>'+SVG.chev+'</div>'+
       '<div class="acct-sect">ตั้งค่า</div>'+
       acctRow("bell", "การแจ้งเตือน", "เปิดอยู่")+

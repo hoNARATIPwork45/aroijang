@@ -22,6 +22,19 @@ python tools/make_audio.py                      # สังเคราะห์
 python tools/render.py --video --fps 60 --png   # วิดีโอเต็ม -> out/aroijang-promo-30s.mp4
 ```
 
+### ใช้เพลงจากไฟล์แทนเพลงที่สังเคราะห์
+
+```bash
+python tools/analyze_song.py music/theme.wav            # หา BPM + บีต -> music/beats.json
+python tools/make_voice.py                              # เสียงใหม่ "ครัวอิ่มจัง" (edge-tts) ลงจังหวะท่อนเดิม
+python tools/patch_theme.py                             # ลบ "ครัวคุณต๋อย" (แปะดนตรีท่อนซ้ำที่ไม่มีเสียงร้อง) + ใส่เสียงใหม่
+python tools/make_song_loop.py 4 music/theme_patched.wav  # ตัด 64 บีตเริ่มบีตที่ 4 ยืดเป็น 128 BPM = 30 วิ วนลูปได้
+python tools/make_audio.py --song music/song_loop.wav   # ผสมกับเสียงเอฟเฟกต์ -> out/soundtrack_song.wav
+```
+
+แล้วเอาเสียงใส่วิดีโอเดิมโดยไม่ต้องเรนเดอร์ภาพใหม่ (ffmpeg `-map 0:v -map 1:a -c:v copy`)
+โฟลเดอร์ `music/` ตั้ง gitignore ไว้ เพราะเพลงมีลิขสิทธิ์ อย่าอัปขึ้น repo สาธารณะ
+
 - ข้อความทั้งหมดและเวลาของแต่ละฉาก: `src/shots.js` (นับเป็นบีต 1 บีต = 0.46875 วิ)
 - ของ 3D (ไข่ดาว ชาไทย พริก หมูปิ้ง เหรียญ หมุด มือถือ รถเข็น เมือง): `src/props.js`
 - รูปมาสคอต/โลโก้แบบสติกเกอร์ไดคัท สร้างจาก `../assets` ด้วย `tools/prep_assets.py`
