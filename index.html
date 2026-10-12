@@ -1916,16 +1916,16 @@
       '</div>';
     }).join("");
 
-    var sub = cartTotal(), fee = sub >= 300 ? 0 : 20;
+    var sub = cartTotal();
     panelFoot.hidden = false;
     panelFoot.innerHTML =
       '<div class="sum"><span>ราคารวม</span><span>'+money(sub)+'</span></div>'+
-      '<div class="sum"><span>ค่าจัดส่ง'+(fee === 0 ? " (ฟรี เมื่อสั่งครบ ฿300)" : "")+'</span><span>'+(fee ? money(fee) : "ฟรี")+'</span></div>'+
-      '<div class="sum total"><span>ยอดชำระ</span><span>'+money(sub + fee)+'</span></div>'+
-      '<button class="btn-wide" id="checkout" type="button">'+SVG.cart+' สั่งซื้อ '+cartQty()+' รายการ</button>';
+      '<div class="sum total"><span>จ่ายที่ร้านตอนไปรับ</span><span>'+money(sub)+'</span></div>'+
+      '<p class="auth-note" style="margin:2px 0 10px">อิ่มจังไม่รับชำระเงิน · ไม่มีค่าส่ง เดินไปรับเองที่ร้าน</p>'+
+      '<button class="btn-wide" id="checkout" type="button">'+SVG.cart+' จดไว้ '+cartQty()+' รายการ</button>';
     document.getElementById("checkout").addEventListener("click", function(){
       CART = {}; syncCartBadge(); closePanel(); setNav(0);
-      showToast("สั่งซื้อสำเร็จ! กำลังจัดเตรียมออเดอร์ของคุณ");
+      showToast("จดไว้แล้ว! โทรถามร้านก่อนไปรับได้เลย");
     });
   }
 
@@ -2842,19 +2842,19 @@
     return '<div class="guest-hero">'+
         '<img src="assets/mascot-peace.png" alt="">'+
         '<b>ยังไม่ได้เข้าสู่ระบบ</b>'+
-        '<span>เข้าสู่ระบบเพื่อสั่งอาหาร สะสมแต้ม และเก็บที่อยู่จัดส่งของคุณ</span>'+
+        '<span>เข้าสู่ระบบเพื่อติดตามร้านโปรด สะสมแต้ม และดูร้านที่เคยไปรับ</span>'+
       '</div>'+
       '<button class="btn-wide" type="button" id="btnLogin">'+ACCT_ICON.login+' เข้าสู่ระบบ / สมัครสมาชิก</button>'+
       '<div class="acct-sect">สิทธิ์ที่จะได้รับ</div>'+
       '<div class="guest-perks">'+
         '<div class="perk">'+ACCT_ICON.star+'สะสมแต้มทุกออเดอร์</div>'+
         '<div class="perk">'+ACCT_ICON.coup+'รับคูปองส่วนลด</div>'+
-        '<div class="perk">'+ACCT_ICON.addr+'บันทึกที่อยู่จัดส่ง</div>'+
-        '<div class="perk">'+ACCT_ICON.hist+'ดูประวัติการสั่งซื้อ</div>'+
+        '<div class="perk">'+ACCT_ICON.addr+'ติดตามร้านโปรด</div>'+
+        '<div class="perk">'+ACCT_ICON.hist+'ดูร้านที่เคยไปรับ</div>'+
       '</div>'+
       '<div class="acct-sect">ต้องเข้าสู่ระบบก่อน</div>'+
-      acctRow("addr", "ที่อยู่จัดส่ง", "", true)+
-      acctRow("hist", "ประวัติการสั่งซื้อ", "", true)+
+      acctRow("addr", "ร้านที่ติดตาม", "", true)+
+      acctRow("hist", "ประวัติที่เคยไปรับ", "", true)+
       acctRow("coup", "คูปองส่วนลด", "", true)+
       '<div class="acct-sect">สำหรับร้านค้า</div>'+
       '<div class="acct-row" data-merchant="1">'+MC_ICON.store+
@@ -2877,14 +2877,13 @@
         '<div class="acct__who"><b>'+u.name+'</b><span>สมาชิกอิ่มจัง · '+u.email+'</span></div>'+
       '</div>'+
       '<div class="acct-stats">'+
-        '<div class="acct-stat"><b>'+u.orders+'</b><span>ออเดอร์</span></div>'+
+        '<div class="acct-stat"><b>'+u.orders+'</b><span>ครั้งที่ไปรับ</span></div>'+
         '<div class="acct-stat"><b>'+u.points.toLocaleString("th-TH")+'</b><span>แต้มสะสม</span></div>'+
         '<div class="acct-stat"><b>'+u.coupons+'</b><span>คูปอง</span></div>'+
       '</div>'+
       '<div class="acct-sect">บัญชีและการสั่งซื้อ</div>'+
-      acctRow("addr", "ที่อยู่จัดส่ง", u.addr)+
-      acctRow("hist", "ประวัติการสั่งซื้อ", u.orders + " ออเดอร์")+
-      acctRow("pay",  "วิธีการชำระเงิน", "พร้อมเพย์ · บัตรเครดิต")+
+      acctRow("addr", "ร้านที่ติดตาม", Object.keys(FAVS).length + " ร้าน")+
+      acctRow("hist", "ประวัติที่เคยไปรับ", u.orders + " ครั้ง")+
       '<div class="acct-sect">สิทธิพิเศษ</div>'+
       acctRow("coup", "คูปองส่วนลด", u.coupons + " ใบพร้อมใช้")+
       acctRow("star", "แต้มสะสมอิ่มจัง", u.points.toLocaleString("th-TH") + " แต้ม")+
