@@ -455,6 +455,10 @@
     width:148px;height:148px;
     animation:spin 1.1s cubic-bezier(.5,.15,.5,.85) infinite;
   }
+  /* ภาพเคลื่อนไหวอยู่แล้ว ไม่ต้องหมุนซ้ำ */
+  .mapview__loading img.mascot-wide{
+    width:min(300px,78%);height:auto;animation:none;
+  }
   @keyframes spin{to{transform:rotate(360deg)}}
   .mapview__loading b{font-size:16px;color:var(--green-700)}
   .mapview__loading span{font-size:13px;color:var(--muted)}
@@ -1105,6 +1109,18 @@
     .section-head > div{padding-right:210px}
   }
 
+  /* มาสคอตในพื้นที่ว่างข้างซ้าย โผล่เฉพาะจอกว้างที่มีที่เหลือจริง */
+  .side-mascot{display:none}
+  @media (min-width:1620px){
+    .side-mascot{
+      display:block; position:fixed; z-index:1;
+      left:16px; bottom:calc(var(--nav-h) + var(--safe-b) + 8px);
+      width:min(270px, calc((100vw - var(--content)) / 2 - 28px));
+      height:auto; pointer-events:none; user-select:none;
+      filter:drop-shadow(0 10px 18px rgba(21,128,61,.18));
+    }
+  }
+
   @media (prefers-reduced-motion:reduce){
     *{animation:none!important;transition-duration:.01ms!important}
   }
@@ -1181,6 +1197,8 @@
 </div>
 
 <!-- Bottom nav -->
+<img class="side-mascot" src="assets/mascot-waiter.gif" alt="" aria-hidden="true">
+
 <nav class="bottomnav" aria-label="เมนูหลัก">
   <button class="navitem is-active" aria-current="page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
