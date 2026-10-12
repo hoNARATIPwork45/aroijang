@@ -129,18 +129,19 @@
 
   /* ---------- Section head + mascot ---------- */
   .section-head{
-    position:relative; padding:18px 16px 6px;
+    position:relative; padding:18px 16px 10px; min-height:126px; overflow:hidden;
   }
-  .section-head > div{padding-right:120px}
+  .section-head > div{padding-right:150px}
   .section-head h1{
     font-size:20px; font-weight:800; color:var(--green-700);
     letter-spacing:.2px;
   }
   .section-head p{font-size:13px;color:var(--muted);margin-top:2px}
   .mascot{
-    position:absolute; right:6px; top:-56px;
-    width:156px;height:156px; pointer-events:none;
-    filter:drop-shadow(0 6px 10px rgba(21,128,61,.22));
+    position:absolute; right:6px; bottom:0;
+    width:142px; height:116px; pointer-events:none;
+    object-fit:cover; object-position:50% 0;
+    filter:drop-shadow(0 6px 10px rgba(21,128,61,.18));
     animation:bob 3.5s ease-in-out infinite;
   }
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -839,8 +840,9 @@
   .btn-wide:active{background:var(--green-700)}
   .btn-wide[disabled]{background:var(--line);color:var(--muted)}
 
+  .mascot-wide{width:min(260px,72%);height:auto;margin:0 auto 10px}
   .empty{text-align:center;padding:30px 10px}
-  .empty img{width:120px;margin:0 auto 10px}
+  .empty img{width:auto;max-width:150px;max-height:170px;margin:0 auto 10px;object-fit:contain}
   .empty b{display:block;font-size:15px;color:var(--green-700)}
   .empty span{display:block;font-size:13px;color:var(--muted);margin-top:4px}
 
@@ -970,7 +972,7 @@
   .empty-grid{
     grid-column:1/-1;text-align:center;padding:30px 14px;
   }
-  .empty-grid img{width:118px;margin:0 auto 8px}
+  .empty-grid img{width:auto;max-width:148px;max-height:165px;margin:0 auto 8px;object-fit:contain}
   .empty-grid b{display:block;font-size:15px;color:var(--green-700)}
   .empty-grid span{display:block;font-size:13px;color:var(--muted);margin-top:4px}
   /* ---------- Rating / รีวิว ---------- */
@@ -1100,8 +1102,8 @@
     .filterbar{padding-top:4px}
     .fresult{flex:0 1 auto;margin-right:2px}
     .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
-    .mascot{width:190px;height:190px;top:-84px}
-    .section-head > div{padding-right:210px}
+    .mascot{width:184px;height:150px}
+    .section-head > div{padding-right:200px}
   }
 
   @media (prefers-reduced-motion:reduce){
@@ -1145,7 +1147,7 @@
       <h1>เลือกดูเมนู</h1>
       <p>เมนูเด็ด คัดมาให้แล้ว อร่อยครบทุกจาน</p>
     </div>
-    <img class="mascot" src="assets/mascot-peace.png" alt="มาสคอตอร่อยจังชูสองนิ้ว">
+    <img class="mascot" src="assets/mascot-serve.webp" alt="มาสคอตอิ่มจังถือจานอาหารสองจาน">
   </div>
 
   <!-- Filter chips -->
@@ -1243,7 +1245,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
     </button>
     <div class="mapview__loading" id="mapLoading">
-      <img src="assets/mascot-hug.png" alt="">
+      <img class="mascot-wide" src="assets/mascot-ride.webp" alt="">
       <b>กำลังหาร้านค้าใกล้คุณ…</b>
       <span>กำลังโหลดแผนที่และตำแหน่งของคุณ</span>
     </div>
@@ -1899,7 +1901,7 @@
     if(!keys.length){
       panelFoot.hidden = true;
       panelBody.innerHTML =
-        '<div class="empty"><img src="assets/mascot-angry.png" alt="">'+
+        '<div class="empty"><img src="assets/mascot-sit.webp" alt="">'+
         '<b>ตะกร้ายังว่างอยู่</b><span>เลือกเมนูอร่อย ๆ ใส่ตะกร้าได้เลย</span></div>';
       return;
     }
@@ -1935,7 +1937,7 @@
     var keys = Object.keys(FAVS);
     if(!keys.length){
       panelBody.innerHTML =
-        '<div class="empty"><img src="assets/mascot-peace.png" alt="">'+
+        '<div class="empty"><img src="assets/mascot-sit.webp" alt="">'+
         '<b>ยังไม่มีรายการโปรด</b><span>กดรูปหัวใจบนเมนูที่ชอบไว้ได้เลย</span></div>';
       return;
     }
